@@ -1,0 +1,37 @@
+[project]
+name = "bond-pipeline"
+version = "0.2.0"
+description = "BOND: Biomedical Ontology Normalization and Disambiguation"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{ name = "Pankaj Rajdeo" }]
+license = { text = "MIT" }
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.8.2",
+    "numpy>=1.26.0",
+    "faiss-cpu==1.8.0",
+    "sentence-transformers>=3.0.0",
+    "tqdm>=4.66.0",
+    "litellm>=1.43.0",
+    "pronto>=2.5.6",
+    "huggingface_hub>=0.20.0",
+    "requests>=2.31.0"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.2.0", "ruff>=0.4.0", "black>=24.4.2"]
+
+[project.scripts]
+bond-query = "bond.cli:main"
+bond-serve = "bond.server:main"
+bond-download-assets = "scripts.download_assets:main"
+bond-build-index = "scripts.build_index_from_owl:main"
+bond-fine-tune = "scripts.fine_tune_st:main"
+bond-stats = "scripts.stats:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bond*", "scripts*"]

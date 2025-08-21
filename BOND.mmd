@@ -1,0 +1,40 @@
+flowchart TD
+    A["Query Input"] --> B["LLM Query Expansion"]
+    B --> B1["Expanded Queries"]
+    B --> B2["Context Terms"]
+    
+    B1 --> C["Multi-Channel Retrieval"]
+    B2 --> C
+    
+    C --> C1["Exact Match<br/>String-based search<br/>on labels & synonyms"]
+    C --> C2["BM25 Base<br/>Lexical search on<br/>expanded queries"]
+    C --> C3["BM25 Context<br/>Lexical search with<br/>domain context"]
+    C --> C4["Dense Base<br/>Vector similarity on<br/>expanded queries"]
+    C --> C5["Dense Context<br/>Vector similarity with<br/>domain context"]
+    
+    C1 --> D["Reciprocal Rank Fusion"]
+    C2 --> D
+    C3 --> D
+    C4 --> D
+    C5 --> D
+    
+    D --> E["Candidate Pool<br/>(Top-K Results)"]
+    
+    E --> F["Metadata Enrichment"]
+    F --> F1["Ontology Information:<br/>• Definitions & Synonyms<br/>• Hierarchical Relations<br/>• Cross-references<br/>• Annotations"]
+    
+    F1 --> G["Ranking & Scoring"]
+    G --> G1["Exact Match Priority<br/>Evidence-based Scoring<br/>Confidence Calculation"]
+    
+    G1 --> H["LLM Disambiguation"]
+    H --> H1["Contextual Analysis<br/>Biological Reasoning<br/>Final Selection"]
+    
+    H1 --> I["Entity Linking Result"]
+    I --> I1["• Chosen Entity<br/>• Confidence Scores<br/>• Biological Explanation<br/>• Alternative Candidates"]
+    
+    style A fill:#e1f5fe
+    style C fill:#f3e5f5
+    style D fill:#fff3e0
+    style G fill:#e8f5e8
+    style H fill:#fce4ec
+    style I fill:#e8f5e8
