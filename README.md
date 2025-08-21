@@ -17,7 +17,7 @@ BOND is a sophisticated, production-ready entity linking pipeline for biomedical
 
 ## 🏗️ Architecture
 
-```
+```mermaid
 flowchart TD
     A["Query Input"] --> B["LLM Query Expansion"]
     B --> B1["Expanded Queries"]
