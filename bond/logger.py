@@ -3,6 +3,14 @@ import logging
 import sys
 import os
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Fallback if python-dotenv is not available
+    pass
+
 def setup_logger():
     """Sets up a standardized logger for the BOND project."""
     logger = logging.getLogger("bond")
