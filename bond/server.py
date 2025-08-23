@@ -3,6 +3,14 @@ from typing import Optional, List, Any, Dict
 import os
 import threading
 from datetime import datetime
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Fallback if python-dotenv is not available
+    pass
 from .runtime_env import configure_runtime
 from .config import BondSettings
 from .pipeline import BondMatcher
