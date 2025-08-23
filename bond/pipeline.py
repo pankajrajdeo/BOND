@@ -15,6 +15,9 @@ from .prompts import QUERY_EXPANSION_PROMPT, DISAMBIGUATION_PROMPT
 from .llm import extract_json_block
 from .validate_signature import validate_embedding_signature
 from .logger import logger
+from .runtime_env import configure_runtime
+configure_runtime()
+
 
 # use the shared configured logger from bond.logger
 
