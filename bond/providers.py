@@ -3,6 +3,15 @@ from typing import Callable, List
 import numpy as np
 import torch
 from sentence_transformers import SentenceTransformer
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Fallback if python-dotenv is not available
+    pass
+
 from .logger import logger
 
 def _norm(vectors: List[List[float]]) -> List[List[float]]:
