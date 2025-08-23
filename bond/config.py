@@ -3,6 +3,14 @@ import json
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Fallback if python-dotenv is not available
+    pass
+
 def _parse_ontologies(env_var: str) -> Optional[List[str]]:
     """Parse comma-separated ontology list from environment variable"""
     val = os.getenv(env_var)
