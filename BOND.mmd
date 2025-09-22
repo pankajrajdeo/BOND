@@ -1,0 +1,52 @@
+flowchart TD
+    %% Entry
+    A["User Query\n(field, organism, tissue)"] --> A1["Abbreviation Normalization\n(field-specific via assets/abbreviations.json)"]
+    A1 --> B["LLM Query Expansion\n(semantic constraints + expansion focus)"]
+    B --> B1["Expanded Queries"]
+    B --> B2["Context Terms"]
+
+    %% Retrieval
+    B1 --> C["Scoped Multi-Channel Retrieval\n(field/organism -> ontology routing)"]
+    B2 --> C
+
+    C --> C1["Exact (SQLite FTS)\nlabels + synonyms"]
+    C --> C2["BM25 (SQLite FTS)"]
+    C --> C3["Dense (FAISS binary + int8 rescoring)"]
+
+    %% Fusion
+    C1 --> D["Reciprocal Rank Fusion (RRF)\nsource-weighted"]
+    C2 --> D
+    C3 --> D
+
+    %% Optional graph expansion
+    D --> D2{Graph Depth > 0?}
+    D2 -- Yes --> GE["Graph Expansion (ontology_edges)\nBFS + distance decay"] --> D3["Second RRF (fused + graph)"]
+    D2 -- No --> D3
+
+    %% Hydration
+    D3 --> E["Top-K Candidate IDs"]
+    E --> F["Metadata Hydration (SQLite)\nlabel, def, synonyms, xrefs, iri\nfilter is_obsolete"]
+
+    %% Re-ranking (soft boosts)
+    F --> G["Contextual Re-ranking\n- exact-match boost\n- ontology prior boost\n- context overlap boost"]
+    G --> G1["Confidence Scaling\n(normalize scores)"]
+
+    %% Disambiguation
+    G1 --> H["LLM Disambiguation\n(field guidance + context enforcement)"]
+    H --> I["Final Output"]
+
+    %% Output details
+    I --> I1["Chosen term + reason\nconfidence (retrieval + LLM)\noptional alternatives\ntrace (expansions, fusion)"]
+
+    %% Styling
+    style A fill:#e1f5fe
+    style A1 fill:#e1f5fe
+    style B fill:#fff3e0
+    style C fill:#f3e5f5
+    style D fill:#ede7f6
+    style D3 fill:#ede7f6
+    style GE fill:#ede7f6
+    style F fill:#e8f5e9
+    style G fill:#e8f5e9
+    style H fill:#fce4ec
+    style I fill:#e8f5e9

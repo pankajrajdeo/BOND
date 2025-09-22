@@ -1,0 +1,76 @@
+# Virtual environment
+bond_venv/
+venv/
+env/
+.env
+
+# Assets directory contents (but keep the directory structure)
+assets/faiss_store/
+assets/ontologies.sqlite
+assets/abbreviations.json
+
+# Skip these directories
+Miscellaneous/
+evals/
+__MACOSX/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Large files that should use LFS
+*.zip
+*.tar.gz
+*.tar.bz2
+*.7z
+*.rar
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# pytest cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
