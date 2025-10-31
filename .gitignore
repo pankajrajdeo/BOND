@@ -4,10 +4,9 @@ venv/
 env/
 .env
 
-# Assets directory contents (but keep the directory structure)
-assets/faiss_store/
-assets/ontologies.sqlite
-assets/abbreviations.json
+# Assets directory - now tracked with Git LFS
+# Large files (ontologies.sqlite, FAISS indices) are tracked via Git LFS
+# Small files like abbreviations.json are tracked normally
 
 # Skip these directories
 Miscellaneous/
