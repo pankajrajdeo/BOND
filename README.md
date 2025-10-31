@@ -2,6 +2,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![GitHub](https://img.shields.io/github/stars/pankajrajdeo/BOND?style=social)](https://github.com/pankajrajdeo/BOND)
+[![HuggingFace Dataset](https://img.shields.io/badge/dataset-huggingface-blue)](https://huggingface.co/datasets/pankajrajdeo/bond-czi-benchmark)
+[![HuggingFace Model](https://img.shields.io/badge/model-huggingface-blue)](https://huggingface.co/pankajrajdeo/bond-embed-v1-fp16)
 
 BOND is a production-grade system for mapping free-text biological terms to standardized ontology identifiers. It combines hybrid retrieval (exact matching, BM25, dense embeddings), reciprocal rank fusion, graph-based expansion, and LLM-powered disambiguation to achieve high-accuracy ontology normalization for biomedical metadata.
 
@@ -265,7 +268,22 @@ BOND includes a comprehensive benchmark dataset derived from CELLxGENE metadata:
 
 ## 🔬 Evaluation
 
-BOND has been evaluated on the BOND-CZI benchmark dataset. See the `evals/` directory for baseline comparisons and evaluation scripts.
+BOND has been evaluated on the BOND-CZI benchmark dataset (192K+ examples). Performance highlights:
+
+- **Embedding Model**: Custom fine-tuned encoder (`bond-embed-v1-fp16`) achieves **92.7% accuracy@10** on ontology evaluation
+- **Hybrid Retrieval**: Combines exact match, BM25, and dense semantic search with Reciprocal Rank Fusion
+- **LLM Disambiguation**: Uses large language models for context-aware term selection
+- **Multi-field Support**: Handles 7 biological field types (cell_type, tissue, disease, etc.) across 5 organisms
+
+See the `evals/` directory for detailed baseline comparisons and evaluation scripts.
+
+## 🔄 Current Work
+
+Active development and research efforts:
+
+- **Reranker Training**: Training a custom cross-encoder reranker to replace the existing retrieval-only pipeline, expected to improve accuracy from ~75-80% (retrieval) to ~85-90% (with reranker). See [RERANKER_TRAINING_GUIDE.md](RERANKER_TRAINING_GUIDE.md) for details.
+- **Benchmark Evaluation**: Comprehensive evaluation on the BOND-CZI benchmark dataset (192K+ examples) to validate performance across all field types and organisms.
+- **Harmonized Knowledge Graph**: Building a harmonized transcriptomic knowledge graph from BOND-normalized metadata to enable advanced querying, cross-dataset analysis, and relationship discovery in single-cell transcriptomics data.
 
 ## 🛠️ Development
 
