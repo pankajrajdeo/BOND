@@ -1,245 +1,338 @@
-# BOND-CZI Benchmark Dataset
+# BOND: Biomedical Ontology Normalization and Disambiguation
 
-A comprehensive benchmark dataset for evaluating biomedical ontology normalization models, derived from the CELLxGENE Census single-cell transcriptomics data.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 
-**Repository**: [pankajrajdeo/bond-czi-benchmark](https://huggingface.co/datasets/pankajrajdeo/bond-czi-benchmark)
+BOND is a production-grade system for mapping free-text biological terms to standardized ontology identifiers. It combines hybrid retrieval (exact matching, BM25, dense embeddings), reciprocal rank fusion, graph-based expansion, and LLM-powered disambiguation to achieve high-accuracy ontology normalization for biomedical metadata.
 
-## 📊 Dataset Overview
+## 🎯 Overview
 
-The BOND-CZI Benchmark is a large-scale dataset designed to evaluate the performance of language models and machine learning systems in mapping author-provided biological terms to standardized ontology identifiers. This benchmark addresses the critical challenge of harmonizing diverse biological terminology across different research studies and datasets.
+BOND addresses the critical challenge of harmonizing diverse biological terminology across research studies and datasets. When researchers submit data to public repositories like GEO, ArrayExpress, or CELLxGENE, they often use inconsistent or non-standard terminology. BOND automatically maps these "author terms" to standardized ontology identifiers, enabling:
 
-### Key Statistics
+- **Metadata harmonization** across datasets
+- **Semantic interoperability** for cross-study analysis
+- **FAIR compliance** through ontology-linked metadata
+- **Scalable curation** of large biomedical repositories
 
-- **Total Datasets**: 1,574 from CELLxGENE Census
-- **Processed Datasets**: 1,561 with successful column mappings
-- **Final Datasets**: 1,027 with extracted training examples
-- **Total Training Examples**: 64,777 author-term to ontology-ID mappings
-- **Metadata Files**: 1,573 downloaded and processed
-- **Organisms**: Primarily Homo sapiens (57,044 examples) and Mus musculus (7,717 examples)
-- **Field Types**: 7 standard biological categories (assay, cell_type, development_stage, disease, sex, self_reported_ethnicity, tissue)
-- **Unique Tissues**: 247 different tissue types
+## ✨ Key Features
 
-## 🎯 Task Description
+- **Hybrid Search Architecture**: Combines exact matching, BM25 keyword search, and dense semantic search (FAISS) for comprehensive retrieval
+- **Reciprocal Rank Fusion (RRF)**: Intelligently combines results from multiple retrieval methods
+- **LLM-Powered Expansion**: Uses large language models to generate query expansions and context-aware synonyms
+- **Graph-Based Expansion**: Leverages ontology hierarchies to discover related terms
+- **Context-Aware Disambiguation**: LLM reasoning to select the correct ontology ID from candidate matches
+- **Multi-Ontology Support**: Works with Cell Ontology (CL), UBERON, MONDO, EFO, PATO, HANCESTRO, and more
+- **Organism-Aware Routing**: Automatically selects appropriate ontologies based on organism and field type
+- **RESTful API**: FastAPI-based service for easy integration
+- **CLI Tool**: Command-line interface for batch processing
 
-The benchmark evaluates the ability of models to:
-1. **Map author terms to ontology IDs**: Convert researcher-provided biological terms to standardized ontology identifiers
-2. **Handle diverse terminology**: Process variations in biological naming conventions across different studies
-3. **Maintain biological accuracy**: Ensure mappings preserve the intended biological meaning
-4. **Scale across multiple domains**: Work across different biological categories and organisms
+## 📊 Supported Fields and Ontologies
 
-### Supported Ontologies
+### Supported Fields
 
-- **Cell Ontology (CL)**: Cell types and cellular components
-- **UBERON**: Anatomical structures and tissues
-- **Experimental Factor Ontology (EFO)**: Experimental factors and conditions
-- **Human Phenotype Ontology (HPO)**: Human phenotypes and diseases
-- **Gene Ontology (GO)**: Biological processes and molecular functions
+- `cell_type`: Cell types and classifications (Cell Ontology)
+- `tissue`: Anatomical structures (UBERON)
+- `disease`: Disease conditions (MONDO)
+- `development_stage`: Developmental stages (organism-specific)
+- `sex`: Biological sex (PATO)
+- `self_reported_ethnicity`: Ethnicity/ancestry (HANCESTRO)
+- `assay`: Experimental methods (EFO)
+- `organism`: Taxonomic classification (NCBI Taxonomy)
 
-## 📁 Dataset Structure
+### Supported Organisms
 
-### Files
+- `Homo sapiens`
+- `Mus musculus`
+- `Danio rerio` (zebrafish)
+- `Drosophila melanogaster` (fruit fly)
+- `Caenorhabditis elegans` (C. elegans)
 
-- `bond_czi_benchmark_data_hydrated_train.jsonl` (58,390 examples) - Training set
-- `bond_czi_benchmark_data_hydrated_dev.jsonl` (3,224 examples) - Development set  
-- `bond_czi_benchmark_data_hydrated_test.jsonl` (3,163 examples) - Test set
+## 🚀 Quick Start
 
-### Data Format
+### Installation
 
-Each example in the JSONL files contains:
+```bash
+# Clone the repository
+git clone https://github.com/pankajrajdeo/BOND.git
+cd BOND
 
-```json
-{
-  "dataset_id": "unique_dataset_identifier",
-  "dataset_title": "Study title",
-  "collection_name": "Collection name",
-  "field_type": "cell_type|assay|tissue|disease|sex|development_stage|self_reported_ethnicity",
-  "organism": "Homo sapiens|Mus musculus",
-  "tissue": "tissue_name",
-  "author_term": "researcher_provided_term",
-  "ontology_id": "CL:0000001",
-  "support_dataset_count": 5,
-  "support_row_count": 25,
-  "llm_predicted_author_column": "column_name",
-  "author_confidence": 0.95,
-  "ontology_confidence": 0.99,
-  "split": "train|dev|test",
-  "mapping": {
-    "original": {
-      "ontology_id": "CL:0000001",
-      "is_obsolete": 0,
-      "label": "standard_ontology_label",
-      "definition": "detailed_definition",
-      "synonyms": {
-        "exact": ["exact_synonym1", "exact_synonym2"],
-        "narrow": ["narrow_synonym1"],
-        "broad": ["broad_synonym1"],
-        "related": ["related_synonym1"]
-      },
-      "replaced_by": [],
-      "consider": []
-    },
-    "resolved": {
-      "ontology_id": "CL:0000001",
-      "label": "standard_ontology_label",
-      "definition": "detailed_definition",
-      "synonyms": {...},
-      "resolution_path": ["CL:0000001"]
-    }
-  }
-}
+# Create and activate virtual environment
+python3.11 -m venv bond_venv
+source bond_venv/bin/activate  # On Windows: bond_venv\Scripts\activate
+
+# Install dependencies
+pip install --upgrade pip
+pip install -e .
 ```
 
-## 🔬 Data Generation Pipeline
+### Prerequisites
 
-The benchmark was created through a comprehensive 6-step pipeline:
+1. **Ontology Database**: You need an SQLite database containing ontology terms. See [Installation Guide](INSTALLATION.md) for details.
+2. **FAISS Index**: Build a FAISS index for dense semantic search:
+   ```bash
+   bond-build-faiss --sqlite_path assets/ontologies.sqlite --assets_path assets
+   ```
+3. **Environment Variables**: Configure LLM providers and embedding models (see Configuration below)
 
-### 1. Manifest Generation
-- **Input**: CELLxGENE Census (2025-01-30 snapshot)
-- **Output**: Dataset manifest with 1,574 datasets
-- **Process**: Analyzed dataset coverage across 7 biological fields and multiple organisms
+### Basic Usage
 
-### 2. Manifest Analysis
-- **Input**: Dataset manifest
-- **Output**: Coverage statistics and publication-ready figures
-- **Process**: Generated comprehensive coverage analysis and visualizations
+#### CLI Example
 
-### 3. Metadata Download
-- **Input**: Dataset IDs from manifest
-- **Output**: 1,573 metadata files
-- **Process**: Downloaded H5AD files, extracted metadata, and cleaned up temporary files
+```bash
+bond-query \
+  --query "T-cell" \
+  --field cell_type \
+  --organism "Homo sapiens" \
+  --tissue "blood" \
+  --verbose
+```
 
-### 4. LLM Column Mapping
-- **Input**: Metadata files and representative sample
-- **Output**: Column mappings for 1,561 datasets
-- **Process**: Used GPT-5 to map author columns to standard ontology columns
-
-### 5. Data Compilation
-- **Input**: Column mappings and metadata files
-- **Output**: 64,777 training examples
-- **Process**: Extracted author-term to ontology-ID pairs with parallel processing
-
-### 6. Ontology Hydration
-- **Input**: Compiled data and ontology database
-- **Output**: Final JSONL files with enriched ontology information
-- **Process**: Added ontology metadata, resolved obsolete terms, and created train/dev/test splits
-
-## 📈 Dataset Statistics
-
-### Field Distribution
-- **cell_type**: 53,140 examples (82.0%)
-- **tissue**: 6,068 examples (9.4%)
-- **development_stage**: 2,573 examples (4.0%)
-- **assay**: 1,789 examples (2.8%)
-- **disease**: 802 examples (1.2%)
-- **self_reported_ethnicity**: 306 examples (0.5%)
-- **sex**: 99 examples (0.2%)
-
-### Organism Distribution
-- **Homo sapiens**: 57,044 examples (88.1%)
-- **Mus musculus**: 7,717 examples (11.9%)
-
-### Split Distribution
-- **Train**: 58,390 examples (90.2%)
-- **Dev**: 3,224 examples (5.0%)
-- **Test**: 3,163 examples (4.9%)
-
-### Field Coverage in Mappings
-- **cell_type**: 1,374 datasets
-- **tissue**: 611 datasets
-- **development_stage**: 657 datasets
-- **assay**: 443 datasets
-- **disease**: 496 datasets
-- **self_reported_ethnicity**: 231 datasets
-- **sex**: 175 datasets
-
-## 🔍 Quality Assessment
-
-### Human Expert Review
-A comprehensive human expert review was conducted on 10% of the LLM-generated column mappings:
-
-- **LLM Performance**: 98.9% accuracy (277/280 correct predictions)
-- **Inter-Annotator Agreement**: 99.1% agreement between reviewers (κ=0.663 - substantial)
-- **Human-LLM Agreement**: 98.9% - experts validated LLM predictions as correct
-
-This high accuracy demonstrates the reliability of the automated mapping process and the quality of the benchmark dataset.
-
-## 🚀 Usage
-
-### Loading the Dataset
+#### Python API Example
 
 ```python
-import json
+from bond import BondMatcher
+from bond.config import BondSettings
 
-# Load training examples
-train_examples = []
-with open('bond_czi_benchmark_data_hydrated_train.jsonl', 'r') as f:
-    for line in f:
-        train_examples.append(json.loads(line.strip()))
+# Initialize matcher
+settings = BondSettings()
+matcher = BondMatcher(settings)
 
-# Example usage
-example = train_examples[0]
-print(f"Author term: {example['author_term']}")
-print(f"Ontology ID: {example['ontology_id']}")
-print(f"Field type: {example['field_type']}")
+# Query
+result = matcher.query(
+    query="T-cell",
+    field_name="cell_type",
+    organism="Homo sapiens",
+    tissue="blood"
+)
+
+print(f"Matched: {result['chosen']['label']}")
+print(f"Ontology ID: {result['chosen']['id']}")
+print(f"Confidence: {result['chosen']['llm_confidence']}")
 ```
 
-### Evaluation Metrics
+#### API Server
 
-Recommended evaluation metrics for this benchmark:
+```bash
+# Start server (with anonymous access for development)
+BOND_ALLOW_ANON=1 bond-serve
 
-1. **Exact Match Accuracy**: Percentage of predictions that exactly match the target ontology ID
-2. **Top-k Accuracy**: Percentage of correct predictions in top-k candidates
-3. **Field-specific Performance**: Performance breakdown by biological field type
-4. **Organism-specific Performance**: Performance breakdown by organism
-5. **Confidence Calibration**: Correlation between model confidence and accuracy
+# Or with API key authentication
+export BOND_API_KEY=your-secret-key
+bond-serve
+```
 
-## 🔧 Technical Details
+Then query the API:
 
-### Data Quality Measures
-- **Support Counts**: Number of datasets and rows supporting each mapping
-- **Confidence Scores**: LLM-generated confidence for author and ontology mappings
-- **Obsolete Term Resolution**: Automatic resolution of deprecated ontology terms
-- **Data Type Consistency**: Ensured consistent data types across all fields
+```bash
+curl -X POST "http://localhost:8000/query" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-secret-key" \
+  -d '{
+    "query": "T-cell",
+    "field_name": "cell_type",
+    "organism": "Homo sapiens",
+    "tissue": "blood"
+  }'
+```
 
-### Processing Features
-- **Parallel Processing**: Used multiprocessing for efficient data compilation
-- **Error Handling**: Robust error handling for malformed CSV files
-- **Memory Optimization**: Efficient processing of large metadata files
-- **Data Validation**: Comprehensive validation of ontology IDs and term mappings
+## 🔧 Configuration
 
-## 📚 Citation
+BOND uses environment variables for configuration. Create a `.env` file:
 
-If you use this benchmark in your research, please cite:
+```bash
+# Embedding Model (choose ONE of the options below)
+
+# Option A: Use your Ollama encoder (recommended for local)
+# Make sure the model is available in Ollama first:
+#   ollama pull rajdeopankaj/bond-embed-v1-fp16
+BOND_EMBED_MODEL=ollama:rajdeopankaj/bond-embed-v1-fp16
+# If running remote Ollama, set the API base (default: http://localhost:11434)
+# OLLAMA_API_BASE=http://your-ollama-host:11434
+
+# Option B: Use a LiteLLM-compatible hosted embedding endpoint
+# Example: OpenAI, Azure OpenAI, Together, Groq, etc.
+# BOND_EMBED_MODEL=litellm:text-embedding-3-small
+
+# Option C: Use Hugging Face TEI (Text Embeddings Inference)
+# Deploy your HF model (pankajrajdeo/bond-embed-v1-fp16) behind a LiteLLM-compatible endpoint,
+# then set the model name accordingly.
+# Example if exposed as huggingface/teimodel (via LiteLLM routing):
+# BOND_EMBED_MODEL=litellm:huggingface/teimodel
+
+# LLM Providers (for expansion and disambiguation)
+BOND_EXPANSION_LLM=anthropic/claude-3-5-sonnet-20241022
+BOND_DISAMBIGUATION_LLM=anthropic/claude-3-5-sonnet-20241022
+
+# Or use OpenAI
+# BOND_EXPANSION_LLM=openai/gpt-4o
+# BOND_DISAMBIGUATION_LLM=openai/gpt-4o
+
+# API Keys (set as environment variables or in .env)
+ANTHROPIC_API_KEY=your-key
+OPENAI_API_KEY=your-key
+
+# Paths
+BOND_ASSETS_PATH=assets
+BOND_SQLITE_PATH=assets/ontologies.sqlite
+
+# Retrieval Parameters
+BOND_TOPK_EXACT=5
+BOND_TOPK_BM25=20
+BOND_TOPK_DENSE=50
+BOND_TOPK_FINAL=20
+
+# Optional: Disable LLM stages for retrieval-only mode
+# BOND_RETRIEVAL_ONLY=1
+```
+
+### Using Your Published Encoders
+
+- Hugging Face model: `pankajrajdeo/bond-embed-v1-fp16`  
+  See model card and direct usage: https://huggingface.co/pankajrajdeo/bond-embed-v1-fp16
+- Ollama model: `rajdeopankaj/bond-embed-v1-fp16`  
+  Pull first, then set `BOND_EMBED_MODEL=ollama:rajdeopankaj/bond-embed-v1-fp16` and (optionally) `OLLAMA_API_BASE`.
+
+> Note: BOND’s embedding provider currently supports LiteLLM-style endpoints and Ollama natively. If you prefer running the Hugging Face model locally with SentenceTransformers, use it to precompute embeddings for your own pipelines; for BOND’s FAISS build and runtime embedding, route the HF model via a LiteLLM-compatible endpoint (e.g., TEI behind a gateway) or use the Ollama variant.
+
+## 📖 Documentation
+
+- [Installation Guide](INSTALLATION.md) - Detailed setup instructions
+- [API Documentation](docs/API.md) - REST API reference
+- [Hybrid Search Guide](README_hybrid_search.md) - Advanced search features
+- [Reranker Training Guide](RERANKER_TRAINING_GUIDE.md) - Training custom rerankers
+- [Benchmark Dataset](https://huggingface.co/datasets/pankajrajdeo/bond-czi-benchmark) - Evaluation dataset on HuggingFace
+
+## 🏗️ Architecture
+
+### Pipeline Overview
+
+```
+┌─────────────────────────────────────────────────┐
+│ STAGE 1: QUERY EXPANSION                        │
+├─────────────────────────────────────────────────┤
+│ LLM generates synonyms, abbreviations,         │
+│ and context-aware expansions                   │
+└─────────────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────┐
+│ STAGE 2: HYBRID RETRIEVAL                      │
+├─────────────────────────────────────────────────┤
+│ • Exact Match (SQLite FTS) → Top-K             │
+│ • BM25 Search (SQLite FTS) → Top-K             │
+│ • Dense Search (FAISS) → Top-K                │
+└─────────────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────┐
+│ STAGE 3: RECIPROCAL RANK FUSION                │
+├─────────────────────────────────────────────────┤
+│ Combine rankings from all methods using RRF    │
+│ with field-aware weighting                     │
+└─────────────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────┐
+│ STAGE 4: GRAPH EXPANSION (Optional)            │
+├─────────────────────────────────────────────────┤
+│ Expand ontology neighbors if confidence low    │
+└─────────────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────┐
+│ STAGE 5: LLM DISAMBIGUATION                    │
+├─────────────────────────────────────────────────┤
+│ LLM selects best match from candidates with    │
+│ reasoning and confidence scoring                │
+└─────────────────────────────────────────────────┘
+```
+
+### Key Components
+
+- **`bond/pipeline.py`**: Core `BondMatcher` class implementing the full pipeline
+- **`bond/retrieval/`**: Retrieval modules (BM25, FAISS)
+- **`bond/fusion.py`**: Reciprocal rank fusion implementation
+- **`bond/graph_utils.py`**: Ontology graph traversal
+- **`bond/rerank.py`**: Soft boosting and reranking logic
+- **`bond/server.py`**: FastAPI REST service
+- **`bond/cli.py`**: Command-line interface
+
+## 📊 Benchmark Dataset
+
+BOND includes a comprehensive benchmark dataset derived from CELLxGENE metadata:
+
+- **192,916 training examples** across 7 field types
+- **1,027 datasets** from CELLxGENE Census
+- **Train/Dev/Test splits**: 173,632 / 9,639 / 9,645 examples
+
+**Dataset**: [pankajrajdeo/bond-czi-benchmark](https://huggingface.co/datasets/pankajrajdeo/bond-czi-benchmark)
+
+## 🔬 Evaluation
+
+BOND has been evaluated on the BOND-CZI benchmark dataset. See the `evals/` directory for baseline comparisons and evaluation scripts.
+
+## 🛠️ Development
+
+### Running Tests
+
+```bash
+make test
+# or
+pytest
+```
+
+### Code Quality
+
+```bash
+make lint
+# or
+ruff check .
+black .
+```
+
+### Building FAISS Index
+
+```bash
+bond-build-faiss \
+  --sqlite_path assets/ontologies.sqlite \
+  --assets_path assets
+```
+
+### Generating Ontology Database
+
+```bash
+bond-generate-sqlite
+```
+
+## 📝 Citation
+
+If you use BOND in your research, please cite:
 
 ```bibtex
-@dataset{bond_czi_benchmark_2024,
-  title={BOND-CZI Benchmark: A Large-Scale Dataset for Biomedical Ontology Normalization},
+@software{bond_2024,
+  title={BOND: Biomedical Ontology Normalization and Disambiguation},
   author={Rajdeo, Pankaj},
   year={2024},
-  url={https://huggingface.co/datasets/pankajrajdeo/bond-czi-benchmark}
+  url={https://github.com/pankajrajdeo/BOND}
 }
 ```
 
 ## 🤝 Contributing
 
-We welcome contributions to improve the benchmark:
-
-1. **Data Quality**: Report issues with ontology mappings or data inconsistencies
-2. **New Fields**: Suggest additional biological fields for inclusion
-3. **Evaluation Metrics**: Propose new evaluation approaches
-4. **Documentation**: Help improve documentation and examples
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
-This dataset is released under the [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- **CELLxGENE Census**: For providing the foundational single-cell transcriptomics data
-- **OpenAI**: For providing GPT-5 access for column mapping generation
-- **Ontology Providers**: For maintaining comprehensive biological ontologies
-- **Research Community**: For contributing the diverse biological datasets
+- **CELLxGENE**: For providing the foundational single-cell transcriptomics data used in the benchmark
+- **Ontology Providers**: For maintaining comprehensive biological ontologies (OBO Foundry)
+- **HuggingFace**: For hosting the benchmark dataset
+
+## 🔗 Related Work
+
+BOND is related to the multi-agent AI system for metadata curation described in the [paper](paper.md). The paper focuses on end-to-end metadata extraction from GEO publications, while BOND focuses on the ontology normalization component.
 
 ---
 
-*This benchmark represents a significant step toward standardized evaluation of biomedical ontology normalization systems, enabling more robust and comparable assessments of model performance in this critical domain.*
+**Repository**: [github.com/pankajrajdeo/BOND](https://github.com/pankajrajdeo/BOND)  
+**Benchmark Dataset**: [huggingface.co/datasets/pankajrajdeo/bond-czi-benchmark](https://huggingface.co/datasets/pankajrajdeo/bond-czi-benchmark)  
+**Author**: Pankaj Rajdeo
