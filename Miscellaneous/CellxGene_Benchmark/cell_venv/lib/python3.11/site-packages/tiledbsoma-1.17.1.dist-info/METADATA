@@ -1,0 +1,204 @@
+Metadata-Version: 2.4
+Name: tiledbsoma
+Version: 1.17.1
+Summary: Python API for efficient storage and retrieval of single-cell data using TileDB
+Home-page: https://github.com/single-cell-data/TileDB-SOMA/tree/main/apis/python
+Author: TileDB, Inc.
+Author-email: help@tiledb.io
+Maintainer: TileDB, Inc.
+Maintainer-email: help@tiledb.io
+License: MIT
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Information Technology
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
+Classifier: Operating System :: Unix
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: anndata>=0.10.1
+Requires-Dist: attrs>=22.2
+Requires-Dist: more-itertools
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: pyarrow
+Requires-Dist: scanpy>=1.9.2
+Requires-Dist: scipy
+Requires-Dist: somacore==1.0.28
+Requires-Dist: typing-extensions
+Provides-Extra: dev
+Requires-Dist: black; extra == "dev"
+Requires-Dist: dask; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: sparse; extra == "dev"
+Requires-Dist: typeguard==4.4.2; extra == "dev"
+Requires-Dist: types-setuptools; extra == "dev"
+Requires-Dist: more-itertools; extra == "dev"
+Requires-Dist: hypothesis; extra == "dev"
+Requires-Dist: deepdiff; extra == "dev"
+Provides-Extra: spatial-io
+Requires-Dist: geopandas; extra == "spatial-io"
+Requires-Dist: tifffile; extra == "spatial-io"
+Requires-Dist: pillow; extra == "spatial-io"
+Requires-Dist: spatialdata>=0.2.5; extra == "spatial-io"
+Requires-Dist: xarray; extra == "spatial-io"
+Requires-Dist: dask<=2024.11.2; extra == "spatial-io"
+Provides-Extra: all
+Requires-Dist: black; extra == "all"
+Requires-Dist: dask; extra == "all"
+Requires-Dist: pytest; extra == "all"
+Requires-Dist: pytest-cov; extra == "all"
+Requires-Dist: ruff; extra == "all"
+Requires-Dist: sparse; extra == "all"
+Requires-Dist: typeguard==4.4.2; extra == "all"
+Requires-Dist: types-setuptools; extra == "all"
+Requires-Dist: more-itertools; extra == "all"
+Requires-Dist: hypothesis; extra == "all"
+Requires-Dist: deepdiff; extra == "all"
+Requires-Dist: geopandas; extra == "all"
+Requires-Dist: tifffile; extra == "all"
+Requires-Dist: pillow; extra == "all"
+Requires-Dist: spatialdata>=0.2.5; extra == "all"
+Requires-Dist: xarray; extra == "all"
+Requires-Dist: dask<=2024.11.2; extra == "all"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: maintainer
+Dynamic: maintainer-email
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# Overview
+
+This is a Python implementation of the [SOMA API specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md) for interacting with the [Unified Single-cell Data Model](https://github.com/single-cell-data/SOMA).
+
+# Installation
+
+TileDB-SOMA is available on [PyPI](https://pypi.org/project/tiledbsoma/) and [Conda](https://anaconda.org/tiledb/tiledbsoma-py), and can be installed via `pip` or `mamba` as indicated below.
+
+```bash
+python -m pip install tiledbsoma
+```
+
+```bash
+mamba install -c conda-forge -c tiledb tiledbsoma-py
+```
+
+To install a specific version:
+
+```shell
+$ python -m pip install git+https://github.com/single-cell-data/TileDB-SOMA.git@0.0.6#subdirectory=apis/python
+```
+
+To update to the latest version:
+
+```shell
+$ python -m pip install --upgrade tiledbsoma
+```
+
+In case of `illegal instruction` errors when running on older architectures --- e.g. Opteron, non-AVX2 --- the issue is that the pre-compiled binaries available at Conda or PyPI aren't targeted for all processor variants over time. You can install from source, as shown below.
+
+To see if this is the issue, on Linux:
+
+```
+grep avx2 /proc/cpuinfo
+```
+
+If this comes up empty for your system, you'll definitely need to build from source to run TileDB-SOMA on that system.
+
+## From source
+
+- Clone [this repo](https://github.com/single-cell-data/TileDB-SOMA)
+- `cd` into your checkout and then `cd apis/python`
+- `python -m pip install .`
+- Or, if you wish to modify the code and run it, `python -m pip install -v -e .`
+- If the TileDB and TileDB-SOMA libraries are locally installed to a custom directory, such as `/usr/local`, set the path with environment variables `TILEDB_PATH` and `TILEDBSOMA_PATH`, `TILEDB_PATH=/usr/local python -m pip install -v -e .`
+- Optionally, if you prefer, you can run that inside `venv`:
+  ```shell
+  $ python -m venv venv
+  $ . ./venv/bin/activate
+  $ python -m pip install -v -e .
+  ```
+- In either case:
+  ```shell
+  make data
+  python -m pytest tests
+  ```
+- A note about the `spdlog` package: If you encounter an install-time error like `fatal error: spdlog/spdlog.h: No such file or directory` you should additionally recursively remove `/usr/local/lib/cmake/spdlog `, since the system uninstall of `spdlog` fails to remove this properly.
+
+# Status
+
+Please see [https://github.com/single-cell-data/TileDB-SOMA/issues](https://github.com/single-cell-data/TileDB-SOMA/issues).
+
+# `platform_config` format
+
+When accessing SOMA APIs, TileDB-specific settings can be configured with the [`platform_config`](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md#platform-specific-configuration) parameter.
+The options accepted by TileDB SOMA are described here, using [TypeScript interface syntax](https://www.typescriptlang.org/docs/handbook/2/objects.html):
+
+```typescript
+interface PlatformConfig {
+  tiledb?: TDBConfig;
+}
+
+interface TDBConfig {
+  create?: TDBCreateOptions;
+}
+
+interface TDBCreateOptions {
+  dims?: { [dim: string]: TDBDimension };
+  attrs?: { [attr: string]: TDBAttr };
+  allows_duplicates?: bool;
+
+  offsets_filters?: TDBFilter[];
+  validity_filters?: TDBFilter[];
+
+  capacity?: number;
+  cell_order?: string;
+  tile_order?: string;
+}
+
+interface TDBDimension {
+  filters?: TDBFilter[];
+  tile?: number;
+}
+
+interface TDBAttr {
+  filters?: TDBFilter[];
+}
+
+/**
+ * Either the name of a filter (in which case it will use
+ * the default arguments) or a specification with filter args.
+ */
+type TDBFilter = string | TDBFilterSpec;
+
+interface TDBFilterSpec {
+  /** The name of the filter. */
+  _name: string;
+  /** kwargs that are passed when constructing the filter. */
+  [kwarg: string]: any;
+}
+```
+
+# Information for developers
+
+Please see the [TileDB-SOMA wiki](https://github.com/single-cell-data/TileDB-SOMA/wiki).
+
+<!-- temp for readthedocs testing -->

@@ -124,6 +124,7 @@ def main():
                 "llm_confidence": (result.get("chosen") or {}).get("llm_confidence"),
             },
             "alternatives": result.get("alternatives", []),
+            "llm_ranked": result.get("llm_ranked", []),
         }
     else:
         out = {
@@ -131,6 +132,7 @@ def main():
             "reason": (result.get("chosen") or {}).get("reason"),
             "retrieval_confidence": (result.get("chosen") or {}).get("retrieval_confidence"),
             "llm_confidence": (result.get("chosen") or {}).get("llm_confidence"),
+            "llm_ranked": result.get("llm_ranked", []),
         }
         if args.num_choices and args.num_choices > 0:
             out = {

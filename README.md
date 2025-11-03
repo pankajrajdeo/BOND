@@ -6,7 +6,7 @@
 [![HuggingFace Dataset](https://img.shields.io/badge/dataset-huggingface-blue)](https://huggingface.co/datasets/pankajrajdeo/bond-czi-benchmark)
 [![HuggingFace Model](https://img.shields.io/badge/model-huggingface-blue)](https://huggingface.co/pankajrajdeo/bond-embed-v1-fp16)
 
-BOND is a production-grade system for mapping free-text biological terms to standardized ontology identifiers. It combines hybrid retrieval (exact matching, BM25, dense embeddings), reciprocal rank fusion, graph-based expansion, and LLM-powered disambiguation to achieve high-accuracy ontology normalization for biomedical metadata.
+BOND is a system for mapping free-text biological terms to standardized ontology identifiers. It combines hybrid retrieval (exact matching, BM25, dense embeddings), reciprocal rank fusion, graph-based expansion, and LLM-powered disambiguation to achieve high-accuracy ontology normalization for biomedical metadata.
 
 ## 🎯 Overview
 
@@ -281,7 +281,7 @@ See the `evals/` directory for detailed baseline comparisons and evaluation scri
 
 Active development and research efforts:
 
-- **Reranker Training**: Training a custom cross-encoder reranker to replace the existing retrieval-only pipeline, expected to improve accuracy from ~75-80% (retrieval) to ~85-90% (with reranker). See [RERANKER_TRAINING_GUIDE.md](RERANKER_TRAINING_GUIDE.md) for details.
+- **Reranker Training**: Training a custom cross-encoder reranker to replace the existing retrieval-only pipeline, expected to improve accuracy from ~75-80% (retrieval) to ~85-90% (with reranker).
 - **Benchmark Evaluation**: Comprehensive evaluation on the BOND-CZI benchmark dataset (192K+ examples) to validate performance across all field types and organisms.
 - **Harmonized Knowledge Graph**: Building a harmonized transcriptomic knowledge graph from BOND-normalized metadata to enable advanced querying, cross-dataset analysis, and relationship discovery in single-cell transcriptomics data.
 
@@ -323,10 +323,10 @@ bond-generate-sqlite
 If you use BOND in your research, please cite:
 
 ```bibtex
-@software{bond_2024,
+@software{bond_2025,
   title={BOND: Biomedical Ontology Normalization and Disambiguation},
   author={Rajdeo, Pankaj},
-  year={2024},
+  year={2025},
   url={https://github.com/pankajrajdeo/BOND}
 }
 ```
@@ -338,16 +338,6 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **CELLxGENE**: For providing the foundational single-cell transcriptomics data used in the benchmark
-- **Ontology Providers**: For maintaining comprehensive biological ontologies (OBO Foundry)
-- **HuggingFace**: For hosting the benchmark dataset
-
-## 🔗 Related Work
-
-BOND is related to the multi-agent AI system for metadata curation described in the [paper](paper.md). The paper focuses on end-to-end metadata extraction from GEO publications, while BOND focuses on the ontology normalization component.
 
 ---
 

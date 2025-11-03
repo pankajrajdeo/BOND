@@ -1,0 +1,955 @@
+Yes, understand the structure from following correctly so you can design it properly.:
+
+
+This is the detail structure we have:
+(bond_venv) (base) rajlq7@EA23-00393 BOND % python3 -c "import json; data=json.load(open('filtered_ontologies.json')); print('=== ONTOLOGY-LEVEL CONSISTENT FIELDS ==='); consistent_fields = {}; [consistent_fields.update({k: consistent_fields.get(k, 0) + 1}) for o in data['ontologies'] for k in o.keys()]; [print(f'{k}: {v}/14 ontologies') for k, v in sorted(consistent_fields.items()) if v >= 10]"
+=== ONTOLOGY-LEVEL CONSISTENT FIELDS ===
+activity_status: 13/14 ontologies
+classes: 14/14 ontologies
+contact: 13/14 ontologies
+definition: 12/14 ontologies
+description: 14/14 ontologies
+directAncestor: 14/14 ontologies
+domain: 13/14 ontologies
+homepage: 14/14 ontologies
+http://purl.obolibrary.org/obo/IAO_0000700: 12/14 ontologies
+http://purl.org/dc/terms/license: 12/14 ontologies
+http://www.geneontology.org/formats/oboInOwl#hasOBOFormatVersion: 10/14 ontologies
+http://www.w3.org/1999/02/22-rdf-syntax-ns#type: 14/14 ontologies
+http://www.w3.org/2002/07/owl#versionIRI: 14/14 ontologies
+http://www.w3.org/2002/07/owl#versionInfo: 12/14 ontologies
+imported: 14/14 ontologies
+individuals: 14/14 ontologies
+iri: 14/14 ontologies
+isObsolete: 14/14 ontologies
+label: 11/14 ontologies
+language: 14/14 ontologies
+layout: 13/14 ontologies
+license: 13/14 ontologies
+loaded: 14/14 ontologies
+numDescendants: 14/14 ontologies
+numHierarchicalDescendants: 14/14 ontologies
+numberOfClasses: 14/14 ontologies
+numberOfEntities: 14/14 ontologies
+numberOfIndividuals: 14/14 ontologies
+numberOfProperties: 14/14 ontologies
+ontologyId: 14/14 ontologies
+ontologyPurl: 14/14 ontologies
+preferredPrefix: 14/14 ontologies
+preferredRoot: 12/14 ontologies
+products: 13/14 ontologies
+properties: 14/14 ontologies
+publications: 10/14 ontologies
+repository: 13/14 ontologies
+searchableAnnotationValues: 14/14 ontologies
+sourceFileTimestamp: 14/14 ontologies
+title: 14/14 ontologies
+tracker: 13/14 ontologies
+type: 14/14 ontologies
+usages: 11/14 ontologies
+(bond_venv) (base) rajlq7@EA23-00393 BOND % python3 -c "import json; data=json.load(open('filtered_ontologies.json')); print('=== CLASS-LEVEL CONSISTENT FIELDS ==='); class_fields = {}; total_classes = 0; [class_fields.update({k: class_fields.get(k, 0) + 1}) for o in data['ontologies'] for c in o.get('classes', []) for k in c.keys()]; [total_classes := total_classes + len(o.get('classes', [])) for o in data['ontologies']]; print(f'Total classes analyzed: {total_classes}'); [print(f'{k}: {v}/{total_classes} classes ({v/total_classes*100:.1f}%)') for k, v in sorted(class_fields.items()) if v >= total_classes * 0.3]"
+=== CLASS-LEVEL CONSISTENT FIELDS ===
+Total classes analyzed: 222061
+curie: 222061/222061 classes (100.0%)
+definition: 163903/222061 classes (73.8%)
+definitionProperty: 163903/222061 classes (73.8%)
+directAncestor: 222061/222061 classes (100.0%)
+directParent: 211942/222061 classes (95.4%)
+hasDirectChildren: 222061/222061 classes (100.0%)
+hasDirectParents: 222061/222061 classes (100.0%)
+hasHierarchicalChildren: 222061/222061 classes (100.0%)
+hasHierarchicalParents: 222061/222061 classes (100.0%)
+hierarchicalAncestor: 222061/222061 classes (100.0%)
+hierarchicalParent: 211942/222061 classes (95.4%)
+hierarchicalProperty: 211953/222061 classes (95.4%)
+http://purl.obolibrary.org/obo/IAO_0000115: 157003/222061 classes (70.7%)
+http://www.geneontology.org/formats/oboInOwl#hasDbXref: 118744/222061 classes (53.5%)
+http://www.geneontology.org/formats/oboInOwl#hasExactSynonym: 112606/222061 classes (50.7%)
+http://www.geneontology.org/formats/oboInOwl#hasOBONamespace: 71950/222061 classes (32.4%)
+http://www.geneontology.org/formats/oboInOwl#id: 146133/222061 classes (65.8%)
+http://www.geneontology.org/formats/oboInOwl#inSubset: 73307/222061 classes (33.0%)
+http://www.w3.org/1999/02/22-rdf-syntax-ns#type: 222061/222061 classes (100.0%)
+http://www.w3.org/2000/01/rdf-schema#label: 220418/222061 classes (99.3%)
+http://www.w3.org/2000/01/rdf-schema#subClassOf: 211953/222061 classes (95.4%)
+imported: 222061/222061 classes (100.0%)
+iri: 222061/222061 classes (100.0%)
+isObsolete: 222061/222061 classes (100.0%)
+isPreferredRoot: 222061/222061 classes (100.0%)
+label: 222061/222061 classes (100.0%)
+numDescendants: 222061/222061 classes (100.0%)
+numHierarchicalDescendants: 222061/222061 classes (100.0%)
+ontologyId: 222061/222061 classes (100.0%)
+ontologyIri: 222061/222061 classes (100.0%)
+ontologyPreferredPrefix: 222061/222061 classes (100.0%)
+relatedTo: 117255/222061 classes (52.8%)
+searchableAnnotationValues: 222061/222061 classes (100.0%)
+shortForm: 222061/222061 classes (100.0%)
+synonym: 125156/222061 classes (56.4%)
+synonymProperty: 125156/222061 classes (56.4%)
+type: 222061/222061 classes (100.0%)
+(bond_venv) (base) rajlq7@EA23-00393 BOND % python3 -c "import json; data=json.load(open('filtered_ontologies.json')); print('=== SYNONYM TYPES ANALYSIS ==='); synonym_types = {}; [synonym_types.update({k: synonym_types.get(k, 0) + 1}) for o in data['ontologies'] for c in o.get('classes', []) for k in c.keys() if 'synonym' in k.lower() or 'related' in k.lower()]; [print(f'{k}: {v} occurrences') for k, v in sorted(synonym_types.items())]"
+=== SYNONYM TYPES ANALYSIS ===
+http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym: 5911 occurrences
+http://www.geneontology.org/formats/oboInOwl#hasExactSynonym: 112606 occurrences
+http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym: 7419 occurrences
+http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym: 40058 occurrences
+http://www.geneontology.org/formats/oboInOwl#hasSynonym: 6 occurrences
+http://www.w3.org/2004/02/skos/core#relatedMatch: 160 occurrences
+relatedFrom: 52505 occurrences
+relatedTo: 117255 occurrences
+synonym: 125156 occurrences
+synonymProperty: 125156 occurrences
+(bond_venv) (base) rajlq7@EA23-00393 BOND % python3 -c "import json; data=json.load(open('filtered_ontologies.json')); print('=== RELATIONSHIP TYPES ANALYSIS ==='); rel_types = {}; [rel_types.update({k: rel_types.get(k, 0) + 1}) for o in data['ontologies'] for c in o.get('classes', []) for k in c.keys() if any(x in k.lower() for x in ['equivalent', 'disjoint', 'union', 'intersection', 'complement', 'restriction'])]; [print(f'{k}: {v} occurrences') for k, v in sorted(rel_types.items())]"
+=== RELATIONSHIP TYPES ANALYSIS ===
+http://www.w3.org/2002/07/owl#disjointUnionOf: 21 occurrences
+http://www.w3.org/2002/07/owl#disjointWith: 2851 occurrences
+http://www.w3.org/2002/07/owl#equivalentClass: 53012 occurrences
+(bond_venv) (base) rajlq7@EA23-00393 BOND % 
+
+(base) rajlq7@EA23-00393 BOND % 
+(base) rajlq7@EA23-00393 BOND % ls -lh filtered_ontologies.json
+-rwxr-x---  1 rajlq7  staff   3.4G Aug 29 13:00 filtered_ontologies.json
+<o[\"ontologyId\"] for o in data[\"ontologies\"]]}')"
+Total ontologies: 14
+Target ontologies found: ['cl', 'fbbt', 'fbdv', 'hancestro', 'hsapdv', 'mmusdv', 'mondo', 'ncbitaxon', 'pato', 'uberon', 'wbbt', 'wbls', 'zfa', 'efo']
+(bond_venv) (base) rajlq7@EA23-00393 BOND % python3 -c "import json; data=json.load(open('filtered_ontologies.json')); total_classes=sum(len(o.get('classes', [])) for o in data['ontologies']); print(f'Total classes across all ontologies: {total_classes:,}'); [print(f'{o[\"ontologyId\"]}: {len(o.get(\"classes\", [])):,} classes') for o in data['ontologies']]"
+Total classes across all ontologies: 222,061
+cl: 18,718 classes
+fbbt: 29,686 classes
+fbdv: 250 classes
+hancestro: 1,283 classes
+hsapdv: 260 classes
+mmusdv: 178 classes
+mondo: 56,673 classes
+ncbitaxon: 146 classes
+pato: 8,625 classes
+uberon: 26,913 classes
+wbbt: 7,573 classes
+wbls: 796 classes
+zfa: 3,285 classes
+efo: 67,675 classes
+(bond_venv) (base) rajlq7@EA23-00393 BOND % python3 -c "import json; data=json.load(open('filtered_ontologies.json')); sample_class=data['ontologies'][0]['classes'][0] if data['ontologies'][0].get('classes') else {}; print('Sample class structure:'); import pprint; pprint.pprint(sample_class, width=120, depth=3)"
+Sample class structure:
+{'curie': {'type': ['literal'], 'value': 'ENSG00000006128'},
+ 'directAncestor': ['http://purl.obolibrary.org/obo/SO_0000704'],
+ 'directParent': ['http://purl.obolibrary.org/obo/SO_0000704'],
+ 'hasDirectChildren': False,
+ 'hasDirectParents': True,
+ 'hasHierarchicalChildren': False,
+ 'hasHierarchicalParents': True,
+ 'hierarchicalAncestor': ['http://purl.obolibrary.org/obo/SO_0000704'],
+ 'hierarchicalParent': ['http://purl.obolibrary.org/obo/SO_0000704'],
+ 'hierarchicalProperty': {'type': ['literal'], 'value': 'http://www.w3.org/2000/01/rdf-schema#subClassOf'},
+ 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'http://www.w3.org/2002/07/owl#Class',
+ 'http://www.w3.org/2000/01/rdf-schema#label': {'type': ['literal'], 'value': 'TAC1'},
+ 'http://www.w3.org/2000/01/rdf-schema#subClassOf': 'http://purl.obolibrary.org/obo/SO_0000704',
+ 'imported': False,
+ 'iri': 'http://identifiers.org/ensembl/ENSG00000006128',
+ 'isObsolete': False,
+ 'isPreferredRoot': False,
+ 'label': [{'type': [...], 'value': 'TAC1'}],
+ 'numDescendants': 0,
+ 'numHierarchicalDescendants': 0,
+ 'ontologyId': {'type': ['literal'], 'value': 'cl'},
+ 'ontologyIri': {'type': ['literal'], 'value': 'http://purl.obolibrary.org/obo/cl.owl'},
+ 'ontologyPreferredPrefix': {'type': ['literal'], 'value': 'CL'},
+ 'searchableAnnotationValues': False,
+ 'shortForm': {'type': ['literal'], 'value': 'ENSG00000006128'},
+ 'type': ['class', 'entity']}
+(bond_venv) (base) rajlq7@EA23-00393 BOND % python3 -c "import json; data=json.load(open('filtered_ontologies.json')); sample_ontology=data['ontologies'][0]; print('Sample ontology structure:'); import pprint; pprint.pprint({k: v for k, v in sample_ontology.items() if k != 'classes'}, width=120, depth=2)"
+Sample ontology structure:
+{'activity_status': 'active',
+ 'canonical': 'cl.owl',
+ 'contact': {'email': 'addiehl@buffalo.edu',
+             'github': 'addiehl',
+             'label': 'Alexander Diehl',
+             'orcid': '0000-0001-9990-8331'},
+ 'definition': [{...}, {...}],
+ 'dependencies': [{...}, {...}, {...}, {...}, {...}, {...}, {...}],
+ 'depicted_by': '/images/CL-logo.jpg',
+ 'description': 'The Cell Ontology is a structured controlled vocabulary for cell types in animals.',
+ 'directAncestor': [],
+ 'domain': 'anatomy and development',
+ 'homepage': 'https://obophenotype.github.io/cell-ontology/',
+ 'http://purl.obolibrary.org/obo/IAO_0000700': 'http://purl.obolibrary.org/obo/CL_0000000',
+ 'http://purl.org/dc/elements/1.1/description': {'type': [...], 'value': 'An ontology of cell types.'},
+ 'http://purl.org/dc/elements/1.1/title': {'type': [...], 'value': 'Cell Ontology'},
+ 'http://purl.org/dc/terms/contributor': ['https://orcid.org/0000-0001-5208-3432',
+                                          'https://orcid.org/0000-0001-9114-8737',
+                                          'https://orcid.org/0000-0001-9990-8331',
+                                          'https://orcid.org/0000-0002-2244-7917',
+                                          'https://orcid.org/0000-0002-6601-2165',
+                                          'https://orcid.org/0000-0002-7073-9172',
+                                          'https://orcid.org/0000-0002-8688-6599',
+                                          'https://orcid.org/0000-0002-9900-7880',
+                                          'https://orcid.org/0000-0003-1980-3228'],
+ 'http://purl.org/dc/terms/license': 'http://creativecommons.org/licenses/by/4.0/',
+ 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'http://www.w3.org/2002/07/owl#Ontology',
+ 'http://www.w3.org/2000/01/rdf-schema#comment': {'type': [...],
+                                                  'value': 'See PMID:15693950, PMID:12799354, PMID:20123131, '
+                                                           'PMID:21208450; Contact Alexander Diehl, '
+                                                           'addiehl[at]buffalo.edu, university at buffalo.'},
+ 'http://www.w3.org/2002/07/owl#versionIRI': 'http://purl.obolibrary.org/obo/cl/releases/2025-07-30/cl.owl',
+ 'http://www.w3.org/2002/07/owl#versionInfo': {'type': [...], 'value': '2025-07-30'},
+ 'imported': False,
+ 'individuals': [{...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...},
+                 {...}],
+ 'iri': 'http://purl.obolibrary.org/obo/cl.owl',
+ 'isObsolete': False,
+ 'label': [{...}],
+ 'language': [{...}],
+ 'layout': 'ontology_detail',
+ 'license': {'label': 'CC BY 4.0',
+             'logo': 'http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png',
+             'url': 'http://creativecommons.org/licenses/by/4.0/'},
+ 'loaded': {'type': [...], 'value': '2025-08-27T13:05:14.308203123'},
+ 'mailingList': 'https://groups.google.com/g/cl_edit',
+ 'numDescendants': 0,
+ 'numHierarchicalDescendants': 0,
+ 'numberOfClasses': {'type': [...], 'value': '18718'},
+ 'numberOfEntities': {'type': [...], 'value': '19346'},
+ 'numberOfIndividuals': {'type': [...], 'value': '170'},
+ 'numberOfProperties': {'type': [...], 'value': '458'},
+ 'ontologyId': 'cl',
+ 'ontologyPurl': 'http://purl.obolibrary.org/obo/cl.owl',
+ 'preferredPrefix': 'CL',
+ 'preferredRoot': ['http://purl.obolibrary.org/obo/CL_0000000'],
+ 'products': [{...}, {...}, {...}, {...}, {...}, {...}, {...}, {...}, {...}],
+ 'properties': [{...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...},
+                {...}],
+ 'publications': [{...}],
+ 'repository': 'https://github.com/obophenotype/cell-ontology',
+ 'searchableAnnotationValues': [{...}, {...}, False, {...}, {...}, {...}, {...}, {...}, {...}],
+ 'sourceFileTimestamp': {'type': [...], 'value': 'Wed Aug 27 12:38:52 UTC 2025'},
+ 'tags': ['cells'],
+ 'taxon': {'id': 'NCBITaxon:33208', 'label': 'Metazoa'},
+ 'title': 'Cell Ontology',
+ 'tracker': 'https://github.com/obophenotype/cell-ontology/issues',
+ 'twitter': 'CellOntology',
+ 'type': ['ontology'],
+ 'usages': [{...}, {...}, {...}, {...}, {...}, {...}, {...}]}
+(bond_venv) (base) rajlq7@EA23-00393 BOND % 
+(bond_venv) (base) rajlq7@EA23-00393 BOND % python3 -c "import json; data=json.load(open('filtered_ontologies.json')); all_keys=set(); [all_keys.update(o.keys()) for o in data['ontologies']]; print('All possible ontology fields:'); [print(f'  - {k}') for k in sorted(all_keys)]"
+All possible ontology fields:
+  - activity_status
+  - baseUri
+  - browsers
+  - build
+  - canonical
+  - classes
+  - contact
+  - definition
+  - definition_property
+  - dependencies
+  - depicted_by
+  - description
+  - directAncestor
+  - domain
+  - funded_by
+  - hidden_property
+  - hierarchical_property
+  - homepage
+  - http://purl.obolibrary.org/obo/IAO_0000700
+  - http://purl.obolibrary.org/obo/fbbt#attributionURL
+  - http://purl.obolibrary.org/obo/format-version
+  - http://purl.org/dc/elements/1.1/creator
+  - http://purl.org/dc/elements/1.1/description
+  - http://purl.org/dc/elements/1.1/publisher
+  - http://purl.org/dc/elements/1.1/rights
+  - http://purl.org/dc/elements/1.1/source
+  - http://purl.org/dc/elements/1.1/title
+  - http://purl.org/dc/terms/contributor
+  - http://purl.org/dc/terms/creator
+  - http://purl.org/dc/terms/description
+  - http://purl.org/dc/terms/isReferencedBy
+  - http://purl.org/dc/terms/license
+  - http://purl.org/dc/terms/source
+  - http://purl.org/dc/terms/title
+  - http://usefulinc.com/ns/doap#GitRepository
+  - http://usefulinc.com/ns/doap#SVNRepository
+  - http://usefulinc.com/ns/doap#bug-database
+  - http://usefulinc.com/ns/doap#mailing-list
+  - http://www.geneontology.org/formats/oboInOwl#NamespaceIdRule
+  - http://www.geneontology.org/formats/oboInOwl#auto-generated-by
+  - http://www.geneontology.org/formats/oboInOwl#date
+  - http://www.geneontology.org/formats/oboInOwl#default-namespace
+  - http://www.geneontology.org/formats/oboInOwl#hasOBOFormatVersion
+  - http://www.geneontology.org/formats/oboInOwl#saved-by
+  - http://www.geneontology.org/formats/oboInOwl#treat-xrefs-as-equivalent
+  - http://www.geneontology.org/formats/oboInOwl#treat-xrefs-as-genus-differentia
+  - http://www.geneontology.org/formats/oboInOwl#treat-xrefs-as-has-subclass
+  - http://www.geneontology.org/formats/oboInOwl#treat-xrefs-as-is_a
+  - http://www.geneontology.org/formats/oboInOwl#treat-xrefs-as-reverse-genus-differentia
+  - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+  - http://www.w3.org/2000/01/rdf-schema#comment
+  - http://www.w3.org/2002/07/owl#versionIRI
+  - http://www.w3.org/2002/07/owl#versionInfo
+  - http://xmlns.com/foaf/0.1/homepage
+  - imported
+  - in_foundry_order
+  - individuals
+  - iri
+  - isObsolete
+  - label
+  - language
+  - layout
+  - license
+  - loaded
+  - mailingList
+  - numDescendants
+  - numHierarchicalDescendants
+  - numberOfClasses
+  - numberOfEntities
+  - numberOfIndividuals
+  - numberOfProperties
+  - oboSlims
+  - ontologyId
+  - ontologyPurl
+  - page
+  - preferredPrefix
+  - preferredRoot
+  - products
+  - properties
+  - publications
+  - reasoner
+  - releases
+  - repository
+  - searchableAnnotationValues
+  - slack
+  - sourceFileTimestamp
+  - synonym_property
+  - tags
+  - taxon
+  - title
+  - tracker
+  - twitter
+  - type
+  - uri
+  - usages
+  - wasDerivedFrom
+  - wikidata_template
+(bond_venv) (base) rajlq7@EA23-00393 BOND % 
