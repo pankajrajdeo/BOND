@@ -1,3 +1,0 @@
-bond
-bond_venv
-scripts
