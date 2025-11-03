@@ -1,7 +1,0 @@
-[console_scripts]
-bond-build-faiss = scripts.build_faiss_from_sqlite:main
-bond-generate-sqlite = scripts.ontology_sqlite_generator:main
-bond-ingest-lungmap = scripts.lungmap_provisional_ingest:main
-bond-ingest-umls = scripts.ingest_umls_full_pipeline:main
-bond-query = bond.cli:main
-bond-serve = bond.server:main
