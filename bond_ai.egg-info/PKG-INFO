@@ -1,0 +1,700 @@
+Metadata-Version: 2.4
+Name: bond-ai
+Version: 0.0.1
+Summary: BOND: Biomedical Ontology Normalization and Disambiguation
+Author: Pankaj Rajdeo
+License: MIT
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: aiohappyeyeballs==2.6.1
+Requires-Dist: aiohttp==3.12.15
+Requires-Dist: aiosignal==1.4.0
+Requires-Dist: annotated-types==0.7.0
+Requires-Dist: anthropic==0.64.0
+Requires-Dist: anyio==4.10.0
+Requires-Dist: attrs==25.3.0
+Requires-Dist: cachetools==5.5.2
+Requires-Dist: certifi==2025.8.3
+Requires-Dist: chardet==5.2.0
+Requires-Dist: charset-normalizer==3.4.3
+Requires-Dist: click==8.2.1
+Requires-Dist: cohere==5.17.0
+Requires-Dist: contourpy==1.3.3
+Requires-Dist: cycler==0.12.1
+Requires-Dist: dataclasses-json==0.6.7
+Requires-Dist: distro==1.9.0
+Requires-Dist: et_xmlfile==2.0.0
+Requires-Dist: faiss-cpu==1.8.0
+Requires-Dist: fastapi==0.116.1
+Requires-Dist: fastavro==1.12.0
+Requires-Dist: fastobo==0.13.0
+Requires-Dist: filelock==3.19.1
+Requires-Dist: filetype==1.2.0
+Requires-Dist: fonttools==4.59.1
+Requires-Dist: frozenlist==1.7.0
+Requires-Dist: fsspec==2025.7.0
+Requires-Dist: google-ai-generativelanguage==0.6.18
+Requires-Dist: google-api-core==2.25.1
+Requires-Dist: google-auth==2.40.3
+Requires-Dist: googleapis-common-protos==1.70.0
+Requires-Dist: greenlet==3.2.4
+Requires-Dist: grpcio==1.74.0
+Requires-Dist: grpcio-status==1.74.0
+Requires-Dist: h11==0.16.0
+Requires-Dist: hf-xet==1.1.7
+Requires-Dist: httpcore==1.0.9
+Requires-Dist: httptools==0.6.4
+Requires-Dist: httpx==0.28.1
+Requires-Dist: httpx-sse==0.4.0
+Requires-Dist: huggingface-hub==0.34.4
+Requires-Dist: idna==3.10
+Requires-Dist: importlib_metadata==8.7.0
+Requires-Dist: Jinja2==3.1.6
+Requires-Dist: jiter==0.10.0
+Requires-Dist: joblib==1.5.1
+Requires-Dist: jsonpatch==1.33
+Requires-Dist: jsonpointer==3.0.0
+Requires-Dist: jsonschema==4.25.0
+Requires-Dist: jsonschema-specifications==2025.4.1
+Requires-Dist: kiwisolver==1.4.9
+Requires-Dist: langchain==0.3.27
+Requires-Dist: langchain-anthropic==0.3.18
+Requires-Dist: langchain-cohere==0.4.5
+Requires-Dist: langchain-community==0.3.27
+Requires-Dist: langchain-core==0.3.74
+Requires-Dist: langchain-google-genai==2.1.9
+Requires-Dist: langchain-huggingface==0.3.1
+Requires-Dist: langchain-openai==0.3.30
+Requires-Dist: langchain-text-splitters==0.3.9
+Requires-Dist: langsmith==0.4.14
+Requires-Dist: litellm==1.75.8
+Requires-Dist: MarkupSafe==3.0.2
+Requires-Dist: marshmallow==3.26.1
+Requires-Dist: mpmath==1.3.0
+Requires-Dist: multidict==6.6.4
+Requires-Dist: mypy_extensions==1.1.0
+Requires-Dist: networkx==3.5
+Requires-Dist: numpy==1.26.4
+Requires-Dist: openai==1.99.9
+Requires-Dist: openpyxl==3.1.5
+Requires-Dist: orjson==3.11.2
+Requires-Dist: packaging==25.0
+Requires-Dist: pandas==2.3.2
+Requires-Dist: pillow==11.3.0
+Requires-Dist: pronto==2.7.0
+Requires-Dist: propcache==0.3.2
+Requires-Dist: proto-plus==1.26.1
+Requires-Dist: protobuf==6.32.0
+Requires-Dist: pyasn1==0.6.1
+Requires-Dist: pyasn1_modules==0.4.2
+Requires-Dist: pydantic==2.11.7
+Requires-Dist: pydantic-settings==2.10.1
+Requires-Dist: pydantic_core==2.33.2
+Requires-Dist: pyparsing==3.2.3
+Requires-Dist: python-dateutil==2.9.0.post0
+Requires-Dist: python-dotenv==1.1.1
+Requires-Dist: pytz==2025.2
+Requires-Dist: PyYAML==6.0.2
+Requires-Dist: rdflib==7.1.4
+Requires-Dist: referencing==0.36.2
+Requires-Dist: regex==2025.7.34
+Requires-Dist: requests==2.32.4
+Requires-Dist: requests-toolbelt==1.0.0
+Requires-Dist: rpds-py==0.27.0
+Requires-Dist: rsa==4.9.1
+Requires-Dist: safetensors==0.6.2
+Requires-Dist: scikit-learn==1.7.1
+Requires-Dist: scipy==1.16.1
+Requires-Dist: sentence-transformers==5.1.0
+Requires-Dist: six==1.17.0
+Requires-Dist: sniffio==1.3.1
+Requires-Dist: SQLAlchemy==2.0.43
+Requires-Dist: starlette==0.47.2
+Requires-Dist: sympy==1.14.0
+Requires-Dist: tenacity==9.1.2
+Requires-Dist: threadpoolctl==3.6.0
+Requires-Dist: tiktoken==0.11.0
+Requires-Dist: tokenizers==0.21.4
+Requires-Dist: torch==2.2.2
+Requires-Dist: tqdm==4.67.1
+Requires-Dist: transformers==4.55.2
+Requires-Dist: types-PyYAML==6.0.12.20250809
+Requires-Dist: types-requests==2.32.4.20250809
+Requires-Dist: typing-inspect==0.9.0
+Requires-Dist: typing-inspection==0.4.1
+Requires-Dist: typing_extensions==4.14.1
+Requires-Dist: tzdata==2025.2
+Requires-Dist: urllib3==2.5.0
+Requires-Dist: uvicorn==0.35.0
+Requires-Dist: uvloop==0.21.0
+Requires-Dist: watchfiles==1.1.0
+Requires-Dist: websockets==15.0.1
+Requires-Dist: yarl==1.20.1
+Requires-Dist: zipp==3.23.0
+Requires-Dist: zstandard==0.23.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.2.0; extra == "dev"
+Requires-Dist: ruff>=0.4.0; extra == "dev"
+Requires-Dist: black>=24.4.2; extra == "dev"
+
+# BOND: Biomedical Ontology Normalization and Disambiguation
+
+> **B**iomedical **O**ntology **N**ormalization and **D**isambiguation
+
+BOND is a sophisticated, production-ready entity linking pipeline for biomedical data harmonization. It combines hybrid retrieval (Exact Match, BM25, and FAISS Vector Search) with modern LLM-powered query expansion and context-aware disambiguation to standardize messy metadata against authoritative biomedical ontologies.
+
+## 🚀 Features
+
+- **🔍 Hybrid Retrieval**: Combines lexical (BM25) and semantic (FAISS) search for robust matching
+- **⚡ High-Performance Indices**: Prebuilt SQLite database and FAISS indices for 15+ major biomedical ontologies
+- **🤖 AI-Powered**: LLM-driven query expansion and disambiguation via LiteLLM
+- **🌐 Universal Providers**: Support for OpenAI, Anthropic, Google, Ollama, and custom HTTP endpoints
+- **📊 Production Ready**: FastAPI server, CLI tool, and Python library
+- **🔒 Secure**: API key authentication and configurable access controls
+- **📈 Scalable**: True batch processing and intelligent caching
+- **🔄 Cross-Platform**: Runs on Linux, macOS (Intel/Apple Silicon), and Windows
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart TD
+    A["Query Input"] --> B["LLM Query Expansion"]
+    B --> B1["Expanded Queries"]
+    B --> B2["Context Terms"]
+    
+    B1 --> C["Multi-Channel Retrieval"]
+    B2 --> C
+    
+    C --> C1["Exact Match<br/>String-based search<br/>on labels & synonyms"]
+    C --> C2["BM25 Base<br/>Lexical search on<br/>expanded queries"]
+    C --> C3["BM25 Context<br/>Lexical search with<br/>domain context"]
+    C --> C4["Dense Base<br/>Vector similarity on<br/>expanded queries"]
+    C --> C5["Dense Context<br/>Vector similarity with<br/>domain context"]
+    
+    C1 --> D["Reciprocal Rank Fusion"]
+    C2 --> D
+    C3 --> D
+    C4 --> D
+    C5 --> D
+    
+    D --> E["Candidate Pool<br/>(Top-K Results)"]
+    
+    E --> F["Metadata Enrichment"]
+    F --> F1["Ontology Information:<br/>• Definitions & Synonyms<br/>• Hierarchical Relations<br/>• Cross-references<br/>• Annotations"]
+    
+    F1 --> G["Ranking & Scoring"]
+    G --> G1["Exact Match Priority<br/>Evidence-based Scoring<br/>Confidence Calculation"]
+    
+    G1 --> H["LLM Disambiguation"]
+    H --> H1["Contextual Analysis<br/>Biological Reasoning<br/>Final Selection"]
+    
+    H1 --> I["Entity Linking Result"]
+    I --> I1["• Chosen Entity<br/>• Confidence Scores<br/>• Biological Explanation<br/>• Alternative Candidates"]
+    
+    style A fill:#e1f5fe
+    style C fill:#f3e5f5
+    style D fill:#fff3e0
+    style G fill:#e8f5e8
+    style H fill:#fce4ec
+    style I fill:#e8f5e8
+```
+
+## 📦 Included Ontologies
+
+The prebuilt assets include indices for these major biomedical ontologies:
+
+- **Cell Ontology (CL)** - Cell types and cellular components
+- **Experimental Factor Ontology (EFO)** - Experimental factors and phenotypes
+- **Foundational Model of Anatomy (FMA)** - Human anatomy
+- **Human Ancestry Ontology (HANCESTRO)** - Population and ancestry terms
+- **Human Phenotype Ontology (HPO)** - Human phenotypic abnormalities
+- **Human Developmental Stages (HsapDv)** - Human development stages
+- **Medical Action Ontology (MAXO)** - Medical procedures and treatments
+- **Mouse Developmental Stages (MmusDv)** - Mouse development stages
+- **Mondo Disease Ontology (MONDO)** - Diseases and disorders
+- **Mouse Pathology Ontology (MPATH)** - Mouse pathology
+- **NCBI Taxonomy (NCBITaxon)** - Biological taxonomy
+- **Ontology for Biomedical Investigations (OBI)** - Biomedical investigations
+- **Ontology for General Medical Science (OGMS)** - General medical concepts
+- **Phenotype and Trait Ontology (PATO)** - Qualities and attributes
+- **Protein Ontology (PR)** - Proteins and protein families
+- **RadLex** - Radiology lexicon
+- **Sequence Ontology (SO)** - Sequence features and types
+- **Uberon** - Multi-species anatomy ontology
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Python**: 3.11+ (required)
+- **Memory**: 4GB+ RAM (8GB+ recommended for large datasets)
+- **Storage**: 2GB+ free space for assets and working directory
+- **OS**: Linux, macOS (Intel/Apple Silicon), or Windows
+
+### 1. Clone and Setup
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd BOND
+
+# Create virtual environment with Python 3.11+
+python3.11 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+### 2. Install Dependencies
+
+```bash
+# Install core dependencies
+pip install --upgrade pip
+
+# Install the BOND package in development mode
+pip install -e .
+```
+
+**macOS Users**: Install OpenMP support if needed:
+```bash
+brew install libomp
+```
+
+### 3. 🗂️ Assets (new schema)
+
+This project uses a single SQLite database and FAISS store built via the scripts in `scripts/`.
+
+SQLite (new schema):
+- `assets/ontologies.sqlite` containing:
+  - `ontology_terms` with columns: curie, label, definition, ontology_id, synonyms_*, xrefs, comments, iri
+  - `ontology_terms_fts` (FTS5) bound to `ontology_terms`
+
+FAISS store:
+- `assets/faiss_store/`
+  - `embeddings.faiss`, `id_map.npy`, `rescore_vectors.npy`, `embedding_signature.json`, `meta.json`
+
+### 4. Environment Configuration
+
+```bash
+# Copy environment template
+cp env.example .env
+
+# Edit with your settings
+nano .env  # or use your preferred editor
+```
+
+**Essential Environment Variables**:
+See `.env.example` for a production-safe template. Copy it to `.env` and fill in values.
+
+### 5. Test the System
+
+```bash
+# Basic query
+bond-query --query "T-cell" --field_name "cell type"
+
+# Verbose output (shows retrieval process)
+bond-query --query "T-cell" --field_name "cell type" --verbose
+
+# Query with context
+bond-query --query "cancer" --field_name "disease" \
+  --dataset_description "single-cell RNA-seq data from tumor samples"
+```
+
+### 6. Start the API Server
+
+```bash
+# Start server (default: http://localhost:8000)
+bond-serve
+
+# In another terminal, test the API
+curl -X POST "http://localhost:8000/query" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "T-cell", "field_name": "cell type"}'
+```
+
+## 🔧 Configuration
+
+### Core Environment Variables
+
+Use `.env.example` as reference for all environment variables.
+
+### LLM Provider Configuration
+
+#### OpenAI
+```env
+BOND_EXPANSION_LLM=openai/gpt-4o-mini
+BOND_DISAMBIGUATION_LLM=openai/gpt-4o-mini
+OPENAI_API_KEY=sk-your-key-here
+```
+
+#### Anthropic
+```env
+BOND_EXPANSION_LLM=anthropic/claude-3-5-sonnet-20241022
+BOND_DISAMBIGUATION_LLM=anthropic/claude-3-5-sonnet-20241022
+ANTHROPIC_API_KEY=sk-ant-your-key-here
+```
+
+#### Local Ollama
+```env
+BOND_EXPANSION_LLM=ollama/llama3.2
+BOND_DISAMBIGUATION_LLM=ollama/llama3.2
+OLLAMA_API_BASE=http://localhost:11434
+```
+
+## 📚 Usage
+
+### Command Line Interface
+
+```bash
+# Basic query
+bond-query --query "T-cell" --field_name "cell type"
+
+# Advanced query with context
+bond-query \
+  --query "cancer" \
+  --field_name "disease" \
+  --dataset_description "single-cell RNA-seq data from tumor samples"
+
+# Verbose output (shows all retrieved results and trace)
+bond-query --query "T-cell" --field_name "cell type" --verbose
+
+# Restrict to specific ontologies
+bond-query --query "T-cell" --field_name "cell type" \
+  --restrict_to_ontologies cl mondo
+
+# Return detailed trace information
+bond-query --query "T-cell" --field_name "cell type" --return_trace
+
+# Override retrieval parameters
+bond-query --query "T-cell" --field_name "cell type" \
+  --topk_final 5 --topk_dense 25
+```
+
+### Python API
+
+```python
+from bond.config import BondSettings
+from bond.pipeline import BondMatcher
+
+# Initialize with default settings
+matcher = BondMatcher()
+
+# Single query
+result = matcher.query(
+    query="T-cell",
+    field_name="cell type",
+    dataset_description="single-cell RNA-seq data"
+)
+
+print(f"Chosen term: {result['chosen']['label']}")
+print(f"Ontology ID: {result['chosen']['id']}")
+print(f"Source: {result['chosen']['source']}")
+print(f"Confidence: {result['chosen']['retrieval_confidence']}")
+
+# Batch processing
+queries = [
+    {"query": "T-cell", "field_name": "cell type"},
+    {"query": "cancer", "field_name": "disease"},
+    {"query": "protein", "field_name": "molecule"}
+]
+
+results = matcher.batch_query(queries)
+
+# Context manager (automatic cleanup)
+with BondMatcher() as matcher:
+    results = matcher.batch_query(queries)
+    # Resources automatically cleaned up
+```
+
+### HTTP API
+
+#### Start Server
+```bash
+# Start server with API key authentication
+export BOND_API_KEY=$(openssl rand -hex 32)
+bond-serve
+
+# Or for development without authentication
+export BOND_ALLOW_ANON=1
+bond-serve
+```
+
+#### API Endpoints
+
+**Single Query**:
+```bash
+curl -X POST "http://localhost:8000/query" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "query": "T-cell",
+    "field_name": "cell type",
+    "dataset_description": "single-cell RNA-seq data"
+  }'
+```
+
+**Discover Supported Inputs**:
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" http://localhost:8000/organisms
+curl -H "Authorization: Bearer YOUR_API_KEY" http://localhost:8000/fields
+```
+
+**Available Ontologies**:
+```bash
+curl "http://localhost:8000/ontologies"
+```
+
+**Health Check**:
+```bash
+curl "http://localhost:8000/health"
+```
+
+## 🔍 Understanding Output
+
+### Query Result Structure
+
+```json
+{
+  "id": "CL:0000623",
+  "label": "natural killer cell",
+  "definition": "A lymphocyte that can spontaneously kill a variety of target cells...",
+  "source": "cl",
+  "iri": "http://purl.obolibrary.org/obo/CL_0000623",
+  "synonyms_exact": ["NK cell", "NK-cell"],
+  "synonyms_related": ["natural killer lymphocyte"],
+  "synonyms_broad": ["lymphocyte", "immune cell"],
+  "synonyms_generic": ["cell"],
+  "alt_ids": [],
+  "xrefs": ["BTO:0000914", "FMA:84370"],
+  "namespace": "cell",
+  "subsets": ["cumulus_restricted"],
+  "comments": [],
+  "parents_is_a": ["CL:0000542"],
+  "abstracts": [],
+  "retrieval_confidence": 0.85,
+  "llm_confidence": 0.92,
+  "reason": "This is the most appropriate parent term for the query 'T-cell'..."
+}
+```
+
+### Confidence Scores
+
+- **`retrieval_confidence`**: Technical score from the hybrid retrieval pipeline (0-1)
+- **`llm_confidence`**: LLM's confidence in the chosen term (0-1, if LLM enabled)
+
+### Field Descriptions
+
+- **`id`**: Ontology identifier (e.g., `CL:0000623`)
+- **`label`**: Human-readable term name
+- **`source`**: Ontology source (e.g., `cl`, `mondo`, `hpo`)
+- **`iri`**: Full IRI for the term
+- **`definition`**: Canonical definition from the ontology
+- **`synonyms_*`**: Categorized synonyms (exact, related, broad, generic)
+- **`xrefs`**: Cross-references to other ontologies
+- **`parents_is_a`**: Direct parent terms
+
+## 🏗️ Building Custom Indices (Advanced)
+
+### Building with the new schema
+
+Commands are provided as CLI entry points and in the Makefile:
+
+```bash
+# Generate SQLite (from filtered_ontologies.json)
+bond-generate-sqlite
+
+# Build/append FAISS from the generated SQLite
+bond-build-faiss --sqlite_path assets/ontologies.sqlite --assets_path assets
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### Missing Assets
+```bash
+# Error: Database not found: assets/ontologies.sqlite
+# Solution: Generate/restore the SQLite database
+bond-generate-sqlite
+```
+
+#### OpenMP Runtime Conflicts (macOS)
+```bash
+# Error: OMP: Error #15: Initializing libomp.dylib
+# Solution: Install OpenMP support
+brew install libomp
+```
+
+#### FAISS Index Errors
+```bash
+# Error: Could not load FAISS index
+# Solution: Ensure assets are properly extracted
+unzip assets.zip
+```
+
+#### API Authentication Errors
+```bash
+# Error: BOND_API_KEY not set
+# Solution: Set API key or allow anonymous access
+export BOND_API_KEY=$(openssl rand -hex 32)
+# or for development:
+export BOND_ALLOW_ANON=1
+```
+
+#### LLM Provider Errors
+```bash
+# Error: Authentication failed
+# Solution: Check your API keys
+export OPENAI_API_KEY=sk-your-actual-key
+```
+
+### Performance Tuning
+
+#### Memory Optimization
+```bash
+# Reduce batch sizes for memory-constrained environments
+export BOND_EMB_BATCH=8
+export BOND_TOPK_DENSE=25
+```
+
+#### Speed Optimization
+```bash
+# Reduce top-k values for faster responses
+export BOND_TOPK_FINAL=5
+export BOND_TOPK_BM25=10
+```
+
+## 🔄 Docker Deployment
+
+```bash
+# Build Docker image
+docker build -t bond-pipeline .
+
+# Run with assets mounted
+docker run -d \
+  --name bond-api \
+  -p 8000:8000 \
+  -v $(pwd)/assets:/app/assets \
+  -e OPENAI_API_KEY=sk-your-key \
+  -e BOND_ALLOW_ANON=1 \
+  bond-pipeline
+```
+
+## 📖 Command Line Reference
+
+### `bond-query`
+```bash
+bond-query [OPTIONS] --query TEXT --field TEXT
+
+Options:
+  --query TEXT                    Query text to harmonize [required]
+  --field TEXT                    Schema field (e.g., cell_type, tissue, disease) [required]
+  --organism TEXT                 One of: Homo sapiens | Mus musculus | Danio rerio | Drosophila melanogaster | Caenorhabditis elegans
+  --tissue TEXT                   Optional tissue/organ context (e.g., lung, brain)
+  --topk_exact INT                Top-k exact matches [default: 5]
+  --topk_bm25 INT                 Top-k BM25 results [default: 20]
+  --topk_dense INT                Top-k vector results [default: 50]
+  --topk_final INT                Final top-k results [default: 10]
+  --rrf_k FLOAT                   RRF fusion parameter [default: 60.0]
+  --exact_only                    Use only exact channel (small vocab fields)
+  --graph_depth INT               Graph expansion depth [default: 0]
+  --rerank_after_graph            Fuse original + graph neighbors
+  --verbose                       Show detailed retrieval process
+  --return_trace                  Include trace information
+  --help                          Show help message
+```
+
+### `bond-serve`
+```bash
+bond-serve [OPTIONS]
+
+Options:
+  --host TEXT                   Host to bind to [default: 0.0.0.0]
+  --port INTEGER               Port to bind to [default: 8000]
+  --help                       Show help message
+```
+
+### `bond-build-faiss`
+```bash
+bond-build-faiss [OPTIONS]
+
+Options:
+  --sqlite_path PATH           Path to assets/ontologies.sqlite [default: assets/ontologies.sqlite]
+  --assets_path PATH           Output directory [default: assets]
+  --embed_model TEXT           Embedding model id (must match FAISS signature)
+  --faiss_rebuild              Force full rebuild instead of incremental append
+  --help                       Show help message
+```
+
+## 🤝 Contributing
+
+We welcome contributions! To get started:
+
+```bash
+# Clone and setup development environment
+git clone <repository-url>
+cd BOND
+python3.11 -m venv venv
+source venv/bin/activate
+pip install -e .
+
+# Extract assets for testing
+unzip assets.zip
+
+# Run tests
+python -m pytest tests/  # if tests exist
+
+# Code formatting
+black bond/
+ruff check bond/
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- **FAISS**: Facebook AI Similarity Search for vector indexing
+- **LiteLLM**: Universal LLM interface for provider abstraction
+- **Pronto**: OWL/OBO ontology parsing
+- **FastAPI**: Modern web framework for API development
+- **SentenceTransformers**: Local embedding model support
+
+## 📞 Support
+
+- **Issues**: Report bugs and request features through GitHub issues
+- **Documentation**: Check the inline help with `--help` flags
+- **Community**: Join discussions about biomedical ontology harmonization
+
+## 🔄 Version History
+
+### v0.2.0 (Current)
+- Prebuilt assets with 15+ major biomedical ontologies
+- Improved hybrid retrieval pipeline
+- Enhanced LLM integration
+- Production-ready API server
+- Comprehensive CLI tools
+
+---
+
+## 📦 Installation
+
+### From PyPI (when published)
+```bash
+pip install bond-ai
+```
+
+### From Source
+```bash
+# Clone the repository
+git clone <repository-url>
+cd BOND
+
+# Create virtual environment with Python 3.11+
+python3.11 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install in development mode
+pip install -e .
+```
+
+**Ready to harmonize your biomedical data? Extract the assets and start querying!** 🚀

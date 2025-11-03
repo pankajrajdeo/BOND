@@ -899,11 +899,14 @@ class BondMatcher:
             for r in ranked:
                 r["retrieval_confidence"] = float((r["fusion_score"] - min_score) / span)
 
+        candidate_ids = {r["id"] for r in ranked}
+
         # Disambiguation via LLM
         chosen = None
         reason = None
         llm_conf = None
         llm_abstained = False
+        llm_ranked_ids: List[str] = []
         t_llm = time.monotonic()
         if ranked and not cfg.retrieval_only:
             # Prepare candidates block
@@ -937,12 +940,23 @@ class BondMatcher:
                     # Check if chosen_id is in candidate list
                     valid_choice = any(r["id"] == parsed.chosen_id for r in ranked)
                     if valid_choice:
+                        llm_ranked_ids.append(parsed.chosen_id)
                         for r in ranked:
                             if r["id"] == parsed.chosen_id:
                                 chosen = dict(r)
                                 reason = parsed.reason
                                 llm_conf = parsed.llm_confidence
                                 break
+                        if parsed.alternatives:
+                            for alt_id in parsed.alternatives:
+                                if (
+                                    alt_id
+                                    and alt_id in candidate_ids
+                                    and alt_id not in llm_ranked_ids
+                                ):
+                                    llm_ranked_ids.append(alt_id)
+                                    if len(llm_ranked_ids) >= 3:
+                                        break
                     else:
                         # Treat out-of-candidate selection as an abstain to avoid misleading fallbacks
                         llm_abstained = True
@@ -969,6 +983,26 @@ class BondMatcher:
             # Surface abstain reason for downstream formatting
             chosen = {"reason": reason}
 
+        # Build top-3 stack for downstream consumers (LLM preference first, fall back to retrieval order)
+        if chosen and chosen.get("id"):
+            primary_id = chosen["id"]
+        else:
+            primary_id = None
+
+        # Ensure chosen id leads the list (LLM order) and pad with retrieval-based results
+        dedup_ids: List[str] = []
+        if primary_id:
+            dedup_ids.append(primary_id)
+        for cand_id in llm_ranked_ids:
+            if cand_id and cand_id not in dedup_ids:
+                dedup_ids.append(cand_id)
+        for r in ranked:
+            if len(dedup_ids) >= 3:
+                break
+            if r["id"] not in dedup_ids:
+                dedup_ids.append(r["id"])
+        llm_ranked_ids = dedup_ids[:3]
+
         # Alternatives if requested
         alternatives: List[Dict[str, Any]] = []
         if chosen and num_choices and num_choices > 0:
@@ -988,6 +1022,19 @@ class BondMatcher:
             result_payload["chosen"] = chosen
         if alternatives:
             result_payload["alternatives"] = alternatives
+        if llm_ranked_ids:
+            ranked_map = {r["id"]: r for r in ranked}
+            llm_ranked_payload = []
+            for idx, cand_id in enumerate(llm_ranked_ids, start=1):
+                cand = ranked_map.get(cand_id)
+                if not cand:
+                    continue
+                entry = {k: v for k, v in cand.items() if k != "fusion_score"}
+                entry["llm_rank"] = idx
+                llm_ranked_payload.append(entry)
+            result_payload["llm_ranked"] = llm_ranked_payload
+        else:
+            result_payload["llm_ranked"] = []
         if return_trace:
             trace["timings_ms"] = {k: round(v, 2) for k, v in timings.items()}
             result_payload["trace"] = trace

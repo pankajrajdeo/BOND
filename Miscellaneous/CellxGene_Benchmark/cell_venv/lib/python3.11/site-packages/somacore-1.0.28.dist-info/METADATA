@@ -1,0 +1,34 @@
+Metadata-Version: 2.2
+Name: somacore
+Version: 1.0.28
+Summary: Python-language API specification and base utilities for implementation of the SOMA system.
+Project-URL: repository, https://github.com/single-cell-data/SOMA.git
+Classifier: License :: OSI Approved :: MIT License
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: anndata
+Requires-Dist: attrs>=22.1
+Requires-Dist: numpy>=1.21
+Requires-Dist: pandas
+Requires-Dist: pyarrow
+Requires-Dist: pyarrow-hotfix
+Requires-Dist: scipy
+Requires-Dist: shapely
+Requires-Dist: typing-extensions>=4.1
+Provides-Extra: dev
+Requires-Dist: black; extra == "dev"
+Requires-Dist: isort; extra == "dev"
+Requires-Dist: mypy~=1.0; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: pandas-stubs; extra == "dev"
+
+# `somacore`: the Python version of the SOMA specification
+
+`somacore` is the Python interpretation of the [abstract SOMA specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md).
+If you’re using SOMA to store or retrive data, you probably want to **install a SOMA implementation instead**, and not this package directly:
+
+- [tiledbsoma](https://pypi.org/project/tiledbsoma/) ([source code](https://github.com/single-cell-data/TileDB-SOMA/))
+
+This core pacakge contains base interfaces, shared types, and other cross-implementation code.
+It is intended for use primarily by SOMA implementors or libraries that handle SOMA data, rather than end users.

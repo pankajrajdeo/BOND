@@ -48,10 +48,11 @@ You MUST return a candidate ID from the list below. If NO candidate satisfies al
 If no candidate satisfies all rules and constraints, set "chosen_id": null to abstain rather than making an incorrect choice.
 
 **FINAL SELECTION:**
-Evaluate the candidates against the rules above and select the single best match, or abstain if none qualify.
+Evaluate the candidates against the rules above and produce your top three ranked picks (best first). All IDs must come from the candidate list. If fewer than three candidates are suitable, provide as many as you can.
 
 Return ONLY a JSON object with these fields:
 - "chosen_id": The single best candidate ID that satisfies all rules, OR null to abstain.
+- "alternatives": An array (length 0-2) containing the next best candidate IDs in descending preference. Omit any IDs that violate the constraints or would duplicate "chosen_id".
 - "reason": A brief, expert rationale explaining WHY the chosen candidate is correct (or why you abstained).
 - "llm_confidence": A number in [0,1] indicating your confidence.
 """

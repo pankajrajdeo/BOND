@@ -45,3 +45,8 @@
 *.cfg text
 *.ini text
 *.json text
+**/*.so filter=lfs diff=lfs merge=lfs -text
+**/*.dylib filter=lfs diff=lfs merge=lfs -text
+*.pt filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
+*.onnx filter=lfs diff=lfs merge=lfs -text
