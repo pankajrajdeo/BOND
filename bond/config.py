@@ -72,6 +72,7 @@ class BondSettings(BaseModel):
 
     # Re-ranking boosts
     exact_match_boost: float = Field(default=float(os.getenv("BOND_EXACT_MATCH_BOOST", 10.0)))
+    label_exact_match_boost: float = Field(default=float(os.getenv("BOND_LABEL_EXACT_MATCH_BOOST", 50.0)))
     ontology_prior_boost: float = Field(default=float(os.getenv("BOND_ONTOLOGY_PRIOR_BOOST", 0.5)))
     context_overlap_boost: float = Field(default=float(os.getenv("BOND_CONTEXT_OVERLAP_BOOST", 0.2)))
 
@@ -101,6 +102,9 @@ class BondSettings(BaseModel):
     enable_semantic_intent_rerank: bool = Field(default=bool(int(os.getenv("BOND_SEMANTIC_INTENT_RERANK", 1))))
     semantic_intent_weight: float = Field(default=float(os.getenv("BOND_SEMANTIC_INTENT_WEIGHT", 0.5)))
 
+    # Cross-encoder reranker
+    reranker_path: Optional[str] = Field(default=os.getenv("BOND_RERANKER_PATH"))
+    
     def model_post_init(self, __context: Dict) -> None:  # type: ignore[override]
         # Derive sqlite path from assets_path always (new schema filename)
         self.sqlite_path = os.path.join(self.assets_path, "ontologies.sqlite")

@@ -51,10 +51,33 @@ def apply_soft_boosts(
     # Assay feature tokens from query
     q_assay_feats = _assay_tokens(query)
 
+    # Normalize original query for label-level exact match check
+    def _normalize_for_match(s: str) -> str:
+        """Normalize string for exact match comparison (lowercase, whitespace normalized)"""
+        return " ".join(s.lower().split())
+    
+    normalized_query = _normalize_for_match(query)
+    label_exact_matches = []
+    
     for r in ranked:
-        # 1) Exact Match Boost
-        if r.get("id") in exact_ids:
+        # 1) Label-Level Exact Match Boost (highest priority)
+        # Check if query exactly matches the label (not just synonyms)
+        candidate_label = r.get("label") or ""
+        normalized_label = _normalize_for_match(candidate_label)
+        
+        if normalized_query == normalized_label:
+            # Perfect label match - give highest boost
+            r["fusion_score"] += cfg.label_exact_match_boost
+            r["_label_exact_match"] = True  # Flag for logging
+            label_exact_matches.append(r.get("id"))
+        # 2) Synonym/Other Exact Match Boost (lower priority)
+        elif r.get("id") in exact_ids:
             r["fusion_score"] += cfg.exact_match_boost
+    
+    # Log label exact matches for debugging
+    if label_exact_matches:
+        from .logger import logger
+        logger.info(f"Label-level exact matches found: {label_exact_matches} (boost: {cfg.label_exact_match_boost})")
 
         # 2) Ontology Prior Boost
         try:

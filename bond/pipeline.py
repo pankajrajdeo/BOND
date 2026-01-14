@@ -18,7 +18,7 @@ from .logger import logger
 from .runtime_env import configure_runtime
 from .schema_policies import allowed_ontologies_for
 from .field_guidance import get_field_guidance
-from .rules import should_abstain, context_violation, species_violation, normalize_organism, normalize_marker_suffixes, normalize_field_name
+from .rules import should_abstain, context_violation, species_violation, normalize_organism, normalize_marker_suffixes, normalize_cell_type_hyphens, normalize_field_name
 from .abbrev import AbbreviationExpander
 from .fusion_weights import field_aware_weights
 from .graph_utils import compute_graph_neighbors
@@ -127,7 +127,84 @@ class BondMatcher:
         # Abbreviation expander (field-scoped)
         from .abbrev import AbbreviationExpander
         self.abbrev = AbbreviationExpander(self.cfg.assets_path)
+        
+        # Load cross-encoder reranker if available
+        self.reranker = None
+        if self.cfg.reranker_path and os.path.exists(self.cfg.reranker_path):
+            try:
+                from sentence_transformers import CrossEncoder
+                self.reranker = CrossEncoder(self.cfg.reranker_path)
+                logger.info(f"Loaded reranker from {self.cfg.reranker_path}")
+            except ImportError:
+                logger.warning("sentence-transformers not installed, reranker disabled")
+            except Exception as e:
+                logger.warning(f"Failed to load reranker: {e}")
 
+    def _rerank_with_cross_encoder(
+        self,
+        query: str,
+        field_name: str,
+        tissue: Optional[str],
+        organism: str,
+        candidates: List[Dict[str, Any]],
+        top_k: int = 20
+    ) -> List[Dict[str, Any]]:
+        """Rerank candidates using cross-encoder reranker model.
+        
+        Args:
+            query: Original query text
+            field_name: Field type (cell_type, tissue, etc.)
+            tissue: Tissue context (optional)
+            organism: Organism name
+            candidates: List of candidate dictionaries with metadata
+            top_k: Number of top candidates to return
+            
+        Returns:
+            Re-ranked list of candidates sorted by reranker score
+        """
+        if not self.reranker or not candidates:
+            return candidates
+        
+        # Build query text (same format as training)
+        query_text = f"{field_name}: {query}; tissue: {tissue or 'unknown'}; organism: {organism}"
+        
+        # Build (query, candidate) pairs
+        pairs = []
+        for cand in candidates:
+            # Format candidate text (same as training)
+            syns = []
+            for syn_type in ['synonyms_exact', 'synonyms_related', 'synonyms_broad']:
+                syns.extend(cand.get(syn_type, []) or [])
+            syns = syns[:10]  # cap at 10 synonyms
+            
+            definition = (cand.get('definition', '') or '')[:200]
+            
+            parts = [f"label: {cand.get('label', '')}"]
+            if syns:
+                parts.append(f"synonyms: {' | '.join(syns)}")
+            if definition:
+                parts.append(f"definition: {definition}")
+            
+            cand_text = "; ".join(parts)
+            pairs.append([query_text, cand_text])
+        
+        # Score with cross-encoder
+        scores = self.reranker.predict(pairs)
+        
+        # Add reranker scores to candidates and re-sort
+        for i, cand in enumerate(candidates):
+            cand['reranker_score'] = float(scores[i])
+            # Replace fusion_score with reranker_score for reranking
+            # (soft boosts will add to this later)
+            cand['fusion_score'] = float(scores[i])
+        
+        # Re-sort by reranker score
+        reranked = sorted(candidates, key=lambda x: x['reranker_score'], reverse=True)
+        
+        logger.info(f"Reranker top-3 scores: {[c['reranker_score'] for c in reranked[:3]]}")
+        
+        return reranked[:top_k]
+    
     def _build_intent_text(
         self,
         query: str,
@@ -235,6 +312,10 @@ class BondMatcher:
                 llm_terms = [t.strip() for t in parsed.context_terms if t and t.strip()]
         except Exception as e:
             logger.debug(f"LLM-based context term generation failed: {e}")
+            # Re-raise rate limit errors so caller can handle retry logic
+            error_str = str(e).lower()
+            if "rate_limit" in error_str or "ratelimit" in error_str or "429" in str(e):
+                raise  # Propagate rate limit errors to caller
 
         # Combine and truncate to top 5 unique
         combined = _uniq([*llm_terms, *bm25_tokens, *priors])
@@ -414,11 +495,25 @@ class BondMatcher:
         
         # Normalize obvious abbreviations before expansion/retrieval
         _orig_query = query
-        # Normalize marker suffixes for cell marker expressions (e.g., CD25+)
+        logger.info(f"[FLOW] Input query: '{query}'")
+        # Normalize cell type names FIRST (e.g., T-cell -> T cell)
+        # This must run BEFORE marker suffix normalization to prevent "T-cell" from being treated as "T-"
         if field_name and field_name.lower() == "cell_type":
+            query_before = query
+            query = normalize_cell_type_hyphens(query) or query
+            if query != query_before:
+                logger.info(f"[FLOW] After hyphen normalization: '{query_before}' -> '{query}'")
+            # Normalize marker suffixes for cell marker expressions (e.g., CD25+)
+            query_before = query
             query = normalize_marker_suffixes(query) or query
+            if query != query_before:
+                logger.info(f"[FLOW] After marker suffix normalization: '{query_before}' -> '{query}'")
         # Apply user-provided abbreviations map
+        query_before = query
         query = self._expand_abbreviations(query, field_name)
+        if query != query_before:
+            logger.info(f"[FLOW] After abbreviation expansion: '{query_before}' -> '{query}'")
+        logger.info(f"[FLOW] Final normalized query for LLM: '{query}'")
 
         trace = {"query": _orig_query, "expansions": [], "candidates": {}, "fusion": [], "disambiguation": {}}
         if query != _orig_query:
@@ -470,15 +565,28 @@ class BondMatcher:
             # Generate expansions via LLM (resilient)
             expansions: List[str] = []
             try:
-                exp_text = self.expansion_llm.text(prompt, temperature=0)
+                logger.info(f"[FLOW] Calling expansion LLM with query: '{query}'")
+                exp_text = self.expansion_llm.text(prompt, temperature=0, max_tokens=1024)
+                logger.info(f"[FLOW] Expansion LLM returned response (length: {len(exp_text) if exp_text else 0})")
                 parsed = parse_llm_json(exp_text, ExpansionResponse)
+                if not parsed:
+                    logger.warning(f"[FLOW] Failed to parse expansion LLM response as JSON: {exp_text[:500]}")
                 expansions = [ln.strip() for ln in (parsed.expansions if parsed else []) if ln.strip()]
+                logger.info(f"[FLOW] Generated {len(expansions)} expansions: {expansions}")
                 # Merge any LLM-suggested context terms with derived ones
                 llm_ctx = [t.strip() for t in (parsed.context_terms if parsed else []) if t.strip()]
                 if llm_ctx:
                     context_terms = _uniq((context_terms or []) + llm_ctx)[:5]
+                    logger.info(f"[FLOW] LLM suggested context terms: {llm_ctx}")
             except Exception as e:
-                logger.warning(f"Expansion LLM failed, proceeding without expansions: {e}")
+                logger.error(f"[FLOW] Expansion LLM FAILED: {e}")
+                import traceback
+                logger.error(f"[FLOW] Expansion LLM traceback: {traceback.format_exc()}")
+                # Re-raise rate limit errors so caller can handle retry logic
+                error_str = str(e).lower()
+                if "rate_limit" in error_str or "ratelimit" in error_str or "429" in str(e):
+                    raise  # Propagate rate limit errors to caller
+                # For other errors, continue without expansions
             logger.info(f"Generated {len(expansions)} expansions and {len(context_terms)} context terms")
             
             queries.extend(expansions[:n_expansions])
@@ -496,7 +604,7 @@ class BondMatcher:
         logger.info("Starting retrieval across exact, BM25(base/ctx), dense(base), and dense_full(intent)...")
         t_ret = time.monotonic()
         exact_future = self.executor.submit(
-            lambda: [h["id"] for h in search_exact(self.get_connection(), cfg.table_terms, cfg.table_terms_fts, q_norms, topk_exact_v, sources=ontology_filter)]
+            lambda: search_exact(self.get_connection(), cfg.table_terms, cfg.table_terms_fts, q_norms, topk_exact_v, sources=ontology_filter)
         )
         bm25_future = None if exact_only else self.executor.submit(
             lambda: [h["id"] for q in queries for h in search_bm25(self.get_connection(), cfg.table_terms, cfg.table_terms_fts, q, topk_bm25_v, sources=ontology_filter)]
@@ -528,7 +636,53 @@ class BondMatcher:
             lambda: [h["id"] for q in ctx_queries for h in search_bm25(self.get_connection(), cfg.table_terms, cfg.table_terms_fts, q, topk_bm25_v, sources=ontology_filter)]
         )
 
-        exact_ids = _uniq(exact_future.result())
+        # Get exact match results with labels (for label exact match detection)
+        exact_results = exact_future.result()  # List of {id, label} dicts
+        exact_ids = _uniq([h["id"] for h in exact_results])
+        
+        # Identify label-level exact matches (before RRF)
+        # Normalize query for comparison
+        def _normalize_for_match(s: str) -> str:
+            return " ".join(s.lower().split())
+        
+        normalized_orig_query = _normalize_for_match(_orig_query or query)
+        label_exact_match_ids = []
+        
+        logger.debug(f"Checking {len(exact_results)} exact match results for label exact match (normalized query: '{normalized_orig_query}')")
+        for result in exact_results[:5]:  # Log first 5 for debugging
+            candidate_label = result.get("label", "")
+            normalized_label = _normalize_for_match(candidate_label)
+            logger.debug(f"  Exact result: {result['id']} = '{candidate_label}' (normalized: '{normalized_label}')")
+        
+        for result in exact_results:
+            candidate_label = result.get("label", "")
+            normalized_label = _normalize_for_match(candidate_label)
+            if normalized_orig_query == normalized_label:
+                label_exact_match_ids.append(result["id"])
+                logger.debug(f"Label exact match found: {result['id']} ('{candidate_label}')")
+        
+        if label_exact_match_ids:
+            logger.info(f"Label-level exact matches found (before RRF): {label_exact_match_ids}")
+        else:
+            logger.debug(f"No label exact matches found. Checked {len(exact_results)} exact match results.")
+        
+        # Also query database directly for label exact matches (catches cases where they're not in exact match results)
+        # This ensures we find label exact matches even if they come from other channels or aren't retrieved at all
+        if not label_exact_match_ids and normalized_orig_query:
+            cur = self.get_connection().cursor()
+            cur.execute(
+                f"SELECT curie, label FROM {cfg.table_terms} WHERE LOWER(TRIM(label)) = ? AND ontology_id IN ({','.join('?' for _ in ontology_filter)})",
+                [normalized_orig_query] + ontology_filter
+            )
+            db_label_exact = cur.fetchall()
+            for curie, label in db_label_exact:
+                if curie not in label_exact_match_ids:
+                    label_exact_match_ids.append(curie)
+                    logger.info(f"Label exact match found via database query: {curie} ('{label}')")
+        
+        if label_exact_match_ids:
+            logger.info(f"Total label-level exact matches found (before RRF): {label_exact_match_ids}")
+        
         bm25_ids = _uniq(bm25_future.result()) if bm25_future else []
         dense_ids = _uniq(dense_base_future.result()) if dense_base_future else []
         dense_full_ids = _uniq(dense_full_future.result()) if dense_full_future else []
@@ -637,6 +791,16 @@ class BondMatcher:
             
         logger.info(f"Field-aware weights for '{field_name}': {weights}")
         channel_rankings = {"exact": exact_ids}
+        
+        # Add label exact match channel with high priority (if any found)
+        if label_exact_match_ids:
+            # Create separate channel for label exact matches at rank 1
+            # This ensures they get maximum RRF score
+            channel_rankings["exact_label"] = label_exact_match_ids
+            # Give label exact matches very high weight (10x normal exact weight)
+            weights["exact_label"] = weights.get("exact", 1.0) * 10.0
+            logger.info(f"Label exact match channel added with weight {weights['exact_label']}: {label_exact_match_ids}")
+        
         if bm25_ids:
             channel_rankings["bm25"] = bm25_ids
         if dense_ids:
@@ -786,8 +950,83 @@ class BondMatcher:
             if fid in meta:
                 ranked.append({"id": fid, **meta[fid], "fusion_score": fscore})
         
+        # IMPORTANT: If label exact matches exist but are not in fused list, add them with high score
+        # This ensures label exact matches are always considered, even if RRF ranked them low
+        if label_exact_match_ids:
+            label_exact_match_set = set(label_exact_match_ids)
+            ranked_ids = {r["id"] for r in ranked}
+            missing_label_exact = label_exact_match_set - ranked_ids
+            
+            if missing_label_exact:
+                logger.info(f"Label exact matches not in top-{len(fused)} after RRF, fetching metadata and adding them: {missing_label_exact}")
+                # Fetch metadata for missing label exact matches
+                cur = self.get_connection().cursor()
+                for lid in missing_label_exact:
+                    cur.execute(
+                        f"SELECT curie, label, definition, ontology_id, iri, synonyms_exact, synonyms_related, synonyms_broad, xrefs, comments, term_doc, is_obsolete FROM {cfg.table_terms} WHERE curie = ?",
+                        (lid,)
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        _id, _label, _definition, _source, _iri, _sx, _sr, _sb, _xr, _cm, _term_doc, _obsolete = row
+                        if _obsolete:
+                            continue
+                        def _split_pipe(x):
+                            if not x:
+                                return None
+                            vals = [t.strip() for t in str(x).split("|") if t.strip()]
+                            return vals or None
+                        syn_exact = _split_pipe(_sx)
+                        syn_related = _split_pipe(_sr)
+                        syn_broad = _split_pipe(_sb)
+                        xrefs = _split_pipe(_xr)
+                        # Give them a high fusion score (higher than top candidate)
+                        max_score = max([r.get("fusion_score", 0.0) for r in ranked], default=1.0)
+                        ranked.append({
+                            "id": _id,
+                            "label": _label,
+                            "definition": _definition,
+                            "source": _source,
+                            "iri": _iri,
+                            "synonyms_exact": syn_exact,
+                            "synonyms_related": syn_related,
+                            "synonyms_broad": syn_broad,
+                            "synonyms_generic": None,
+                            "alt_ids": None,
+                            "xrefs": xrefs,
+                            "namespace": None,
+                            "subsets": None,
+                            "comments": _cm,
+                            "parents_is_a": None,
+                            "abstracts": None,
+                            "term_doc": _term_doc,
+                            "fusion_score": max_score + 1.0
+                        })
+                        logger.info(f"Added label exact match {lid} ({_label}) with boosted score {max_score + 1.0}")
+        
         timings["hydrate_ms"] = (time.monotonic() - t_hydrate) * 1000
         logger.info(f"Metadata hydration complete: {len(ranked)} candidates with full information")
+
+        # Re-check for label exact matches in ALL ranked candidates (not just exact match results)
+        # This catches cases where label exact matches come from BM25/dense channels
+        def _normalize_for_match(s: str) -> str:
+            return " ".join(s.lower().split())
+        
+        normalized_orig_query = _normalize_for_match(_orig_query or query)
+        label_exact_match_ids_all = []
+        for r in ranked:
+            candidate_label = r.get("label", "")
+            normalized_label = _normalize_for_match(candidate_label)
+            if normalized_orig_query == normalized_label:
+                label_exact_match_ids_all.append(r["id"])
+                if r["id"] not in label_exact_match_ids:
+                    logger.info(f"Found label exact match in ranked candidates (not from exact channel): {r['id']} ('{candidate_label}')")
+        
+        # Merge with previously found label exact matches
+        label_exact_match_ids.extend([x for x in label_exact_match_ids_all if x not in label_exact_match_ids])
+        label_exact_match_set = set(label_exact_match_ids)
+        if label_exact_match_set:
+            logger.info(f"Total label exact matches (from all channels): {label_exact_match_set}")
 
         # --- Pre-LLM Hard Constraints (Phase 1 Critical Fix) ---
         logger.info("Applying pre-LLM hard constraints...")
@@ -810,10 +1049,19 @@ class BondMatcher:
             return payload
         
         # Apply hard filters for cell types
+        # IMPORTANT: Label exact matches are exempt from filtering (they are the most direct match)
+        if label_exact_match_set:
+            logger.info(f"Label exact matches to exempt from filtering: {label_exact_match_set}")
         original_count = len(ranked)
         if field_name.lower() in {"cell_type"} and (tissue or organism):
             kept = []
             for r in ranked:
+                # Exempt label exact matches from hard constraints filtering
+                if r['id'] in label_exact_match_set:
+                    logger.info(f"Exempting {r['id']} ({r.get('label', '')}) from hard constraints - label exact match")
+                    kept.append(r)
+                    continue
+                
                 blob = _make_label_blob(r)
                 if tissue and context_violation(blob, tissue):
                     logger.debug(f"Filtered {r['id']} due to tissue conflict: {r.get('label', '')}")
@@ -870,25 +1118,45 @@ class BondMatcher:
         logger.info("Re-ranking candidates with contextual soft boosts...")
         exact_set = set(exact_ids)
 
-        # Semantic intent cosine rerank using FAISS rescore vectors (no term re-embedding)
-        if self.cfg.enable_semantic_intent_rerank and 'intent_vec' in locals() and intent_vec is not None and ranked:
+        # Cross-encoder reranker (if available) - REPLACES rule-based reranking
+        if self.reranker is not None and ranked:
             try:
-                cand_ids = [r["id"] for r in ranked]
-                sim_map = self.faiss.score_ids(intent_vec, cand_ids)
-                if sim_map:
-                    sims = [sim_map.get(r["id"], 0.0) for r in ranked]
-                    s_min, s_max = min(sims), max(sims)
-                    denom = (s_max - s_min) or 1.0
-                    for r, s in zip(ranked, sims):
-                        score01 = (s - s_min) / denom
-                        r["fusion_score"] += self.cfg.semantic_intent_weight * float(score01)
-                    logger.info("Applied semantic intent cosine rerank to fused candidates")
+                logger.info("Applying cross-encoder reranking (replacing rule-based reranking)...")
+                ranked = self._rerank_with_cross_encoder(
+                    _orig_query or query, field_name, tissue, organism, ranked, top_k=topk_final or len(ranked)
+                )
+                logger.info(f"Reranker reordered candidates, top-3: {[r['id'] for r in ranked[:3]]}")
+                # Reranker replaces all rule-based reranking - skip semantic intent and soft boosts
+                ranked.sort(key=lambda x: x["fusion_score"], reverse=True)
             except Exception as e:
-                logger.debug(f"Semantic intent rerank skipped due to error: {e}")
+                logger.warning(f"Reranker failed, falling back to rule-based reranking: {e}")
+                # Fall through to rule-based reranking
+                use_rule_based_rerank = True
+            else:
+                use_rule_based_rerank = False
+        else:
+            use_rule_based_rerank = True
 
-        apply_soft_boosts(ranked, cfg, field_name, _orig_query or "", context_terms or [], exact_set)
+        # Rule-based reranking (only if reranker is not used or failed)
+        if use_rule_based_rerank:
+            # Semantic intent cosine rerank using FAISS rescore vectors (no term re-embedding)
+            if self.cfg.enable_semantic_intent_rerank and 'intent_vec' in locals() and intent_vec is not None and ranked:
+                try:
+                    cand_ids = [r["id"] for r in ranked]
+                    sim_map = self.faiss.score_ids(intent_vec, cand_ids)
+                    if sim_map:
+                        sims = [sim_map.get(r["id"], 0.0) for r in ranked]
+                        s_min, s_max = min(sims), max(sims)
+                        denom = (s_max - s_min) or 1.0
+                        for r, s in zip(ranked, sims):
+                            score01 = (s - s_min) / denom
+                            r["fusion_score"] += self.cfg.semantic_intent_weight * float(score01)
+                        logger.info("Applied semantic intent cosine rerank to fused candidates")
+                except Exception as e:
+                    logger.debug(f"Semantic intent rerank skipped due to error: {e}")
 
-        ranked.sort(key=lambda x: x["fusion_score"], reverse=True)
+            apply_soft_boosts(ranked, cfg, field_name, _orig_query or "", context_terms or [], exact_set)
+            ranked.sort(key=lambda x: x["fusion_score"], reverse=True)
         timings["rerank_ms"] = (time.monotonic() - t_rerank) * 1000
 
         # Calculate confidence scores
@@ -906,13 +1174,21 @@ class BondMatcher:
         reason = None
         llm_conf = None
         llm_abstained = False
+        llm_was_called = False  # Track if LLM was actually invoked
         llm_ranked_ids: List[str] = []
         t_llm = time.monotonic()
         if ranked and not cfg.retrieval_only:
+            logger.info(f"[FLOW] Starting disambiguation with {len(ranked)} candidates")
+            logger.info(f"[FLOW] Disambiguation query: '{query}'")
+            logger.info(f"[FLOW] Top 3 candidates for disambiguation: {[r.get('id') + ':' + r.get('label', '')[:50] for r in ranked[:3]]}")
             # Prepare candidates block
+            # Mark label exact matches for LLM visibility (label_exact_match_ids is defined earlier in the function)
+            label_exact_match_set = set(label_exact_match_ids) if label_exact_match_ids else set()
             cand_lines = []
             for r in ranked[: topk_final or len(ranked)]:
-                cand_lines.append(f"{r['id']} | {r.get('label') or ''} | {r.get('source') or ''} | {r.get('retrieval_confidence', 0.0):.3f} | { (r.get('definition') or '')[:200] }")
+                is_exact = r['id'] in label_exact_match_set
+                exact_marker = " [EXACT LABEL MATCH]" if is_exact else ""
+                cand_lines.append(f"{r['id']} | {r.get('label') or ''}{exact_marker} | {r.get('source') or ''} | {r.get('retrieval_confidence', 0.0):.3f} | { (r.get('definition') or '')[:200] }")
             candidates_block = "\n".join(cand_lines)
             guidance = get_field_guidance(field_name)
             guidance_block = ""
@@ -932,8 +1208,15 @@ class BondMatcher:
                 disambiguation_rules=guidance.get('disambiguation_rules', ''),
             )
             try:
-                out = self.disamb_llm.text(prompt, temperature=0)
+                logger.info(f"[FLOW] Calling disambiguation LLM with query: '{query}'")
+                llm_was_called = True  # Mark that we're calling the LLM
+                out = self.disamb_llm.text(prompt, temperature=0, max_tokens=1024)
+                logger.info(f"[FLOW] Disambiguation LLM returned response (length: {len(out) if out else 0})")
                 parsed = parse_llm_json(out, DisambiguationResponse)
+                if parsed:
+                    logger.info(f"[FLOW] Disambiguation LLM chose: {parsed.chosen_id}, confidence: {parsed.llm_confidence}, reason: {parsed.reason[:100] if parsed.reason else 'N/A'}")
+                else:
+                    logger.warning(f"[FLOW] Failed to parse disambiguation LLM response: {out[:500]}")
                 
                 # Validate LLM response (Phase 1 Critical Fix)
                 if parsed and parsed.chosen_id:
@@ -967,21 +1250,52 @@ class BondMatcher:
                     llm_abstained = True
                     reason = parsed.reason or "LLM chose to abstain"
             except Exception as e:
-                logger.warning(f"Error parsing LLM disambiguation response: {e}")
+                logger.error(f"[FLOW] Disambiguation LLM FAILED: {e}")
+                import traceback
+                logger.error(f"[FLOW] Disambiguation LLM traceback: {traceback.format_exc()}")
+                # Re-raise rate limit errors so caller can handle retry logic
+                error_str = str(e).lower()
+                if "rate_limit" in error_str or "ratelimit" in error_str or "429" in str(e):
+                    raise  # Propagate rate limit errors to caller
+                # For other errors, continue with fallback
                 pass
 
         timings["llm_ms"] = (time.monotonic() - t_llm) * 1000 if not cfg.retrieval_only else 0.0
-        # Fallback to top-1 if LLM did not choose AND did not abstain (or in retrieval-only mode)
+        # Fallback to top-1 if LLM did not choose (including when it abstained)
+        # Even if LLM abstained, use top retrieval result as educated guess based on context
         if not chosen and ranked and (cfg.retrieval_only or not llm_abstained):
+            logger.info(f"[FLOW] Disambiguation LLM did not choose, falling back to top retrieval result: {ranked[0].get('id')} - {ranked[0].get('label', '')[:50]}")
             chosen = dict(ranked[0])
+            # If LLM was called but didn't choose/abstain, mark it as called
+            if llm_was_called:
+                chosen["_llm_called"] = True
+        elif not chosen and ranked and llm_abstained:
+            # LLM abstained but we should still use top retrieval as educated guess
+            logger.info(f"[FLOW] Disambiguation LLM abstained, using top retrieval result as educated guess: {ranked[0].get('id')} - {ranked[0].get('label', '')[:50]}")
+            chosen = dict(ranked[0])
+            # Mark that LLM was called and add abstain reason as context
+            if llm_was_called:
+                chosen["_llm_called"] = True
+                if reason:
+                    # Append LLM's abstain reason to the chosen result for context
+                    chosen["llm_abstain_reason"] = reason
+                    chosen["reason"] = f"LLM abstained but using top retrieval result based on context. LLM reason: {reason}"
+        elif chosen:
+            logger.info(f"[FLOW] Disambiguation LLM chose: {chosen.get('id')} - {chosen.get('label', '')[:50]}")
+            if llm_conf is not None:
+                logger.info(f"[FLOW] LLM completed successfully with confidence: {llm_conf}")
+            else:
+                logger.warning(f"[FLOW] LLM chose but confidence is None (may be abstain or parsing issue)")
+        elif llm_abstained:
+            logger.info(f"[FLOW] Disambiguation LLM abstained, reason: {reason}")
         if chosen is not None:
-            if reason is not None:
+            if reason is not None and "reason" not in chosen:
                 chosen["reason"] = reason
             if llm_conf is not None:
                 chosen["llm_confidence"] = llm_conf
-        elif llm_abstained and reason:
-            # Surface abstain reason for downstream formatting
-            chosen = {"reason": reason}
+            # Mark that LLM was called (even if confidence is None, it means LLM ran)
+            if llm_was_called:
+                chosen["_llm_called"] = True
 
         # Build top-3 stack for downstream consumers (LLM preference first, fall back to retrieval order)
         if chosen and chosen.get("id"):
@@ -1012,6 +1326,7 @@ class BondMatcher:
             ]
 
         # Assemble output
+        logger.info(f"[FLOW] Generating final output - chosen: {chosen.get('id') if chosen else 'None'} - {chosen.get('label', '')[:50] if chosen else 'None'}")
         result_payload = {
             "results": [
                 {k: v for k, v in r.items() if k != "fusion_score"}

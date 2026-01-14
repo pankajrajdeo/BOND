@@ -39,7 +39,16 @@ You are a meticulous biomedical ontology curator. Your sole task is to choose th
 You MUST return a candidate ID from the list below. If NO candidate satisfies all rules after applying constraints, set "chosen_id": null.
 
 {disambiguation_rules}
-- Context enforcement: If a Tissue Context is provided, REJECT any candidate whose label/definition/synonyms indicate an incompatible organ/system (e.g., salivary or mammary ducts for lung; non-respiratory tissues for airway queries).
+
+**EXACT MATCH PRIORITY (HIGHEST PRIORITY):**
+- **LABEL EXACT MATCHES**: If a candidate's label EXACTLY matches the query (case-insensitive, normalized), it has HIGHEST PRIORITY and should be chosen over context-specific matches.
+- **Only if no exact label match exists** should you consider tissue context or other signals.
+
+**CONTEXT ENFORCEMENT (LOWER PRIORITY):**
+- If a Tissue Context is provided, REJECT any candidate whose label/definition/synonyms indicate an incompatible organ/system (e.g., salivary or mammary ducts for lung; non-respiratory tissues for airway queries).
+- However, if an exact label match exists, it takes precedence over tissue context matching.
+
+**OTHER RULES:**
 - Species enforcement: REJECT candidates with species markers (e.g., "(Mmus)") that contradict the organism context.
 - Unknown/ambiguous queries: For queries containing "unknown" or "doublet", prefer to set "chosen_id": null rather than guess.
 - The retrieval score is the LEAST important factor; use it only to break ties between candidates that already satisfy all rules and context constraints.

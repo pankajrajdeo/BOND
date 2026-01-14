@@ -57,6 +57,10 @@ class AbbreviationExpander:
         keys.extend(["*", "global"])  # optional global sections
         for key in keys:
             for pat, repl in self._pats.get(key, []):
+                # Skip expansion if the replacement text is already present in the query
+                # This prevents "T cell" -> "t cell cell" when "t": "t cell" exists
+                if repl.lower() in text.lower():
+                    continue
                 out = pat.sub(repl, out)
         return out
 
