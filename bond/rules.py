@@ -157,6 +157,42 @@ def normalize_marker_suffixes(text: str | None) -> str | None:
     return out
 
 
+def normalize_cell_type_hyphens(text: str | None) -> str | None:
+    """Normalize hyphens in cell type names: remove hyphens in the middle of words, keep hyphens at the end.
+    
+    Rule: 
+    - If hyphen is in the middle of words (e.g., "T-cell"), remove it (convert to "T cell").
+    - If hyphen is at the end of a word (e.g., "CD4-"), leave it as is.
+    - If hyphen is before "positive" or "negative" (marker expressions), leave it as is.
+    
+    Examples:
+        'T-cell' -> 'T cell' (hyphen in middle, removed)
+        'B-cell' -> 'B cell' (hyphen in middle, removed)
+        'NK-cell' -> 'NK cell' (hyphen in middle, removed)
+        'CD4-' -> 'CD4-' (hyphen at end, preserved)
+        'CD4-negative' -> 'CD4-negative' (marker expression, preserved)
+        'CD8-positive' -> 'CD8-positive' (marker expression, preserved)
+    """
+    if not text:
+        return text
+    
+    # Pattern: hyphen between two word characters
+    # But preserve if second word is "positive" or "negative" (marker expressions)
+    pattern = r'\b([A-Za-z0-9]+)-([A-Za-z0-9]+)\b'
+    
+    def _replace_hyphen(m: re.Match[str]) -> str:
+        # Check if the second word is "positive" or "negative" (case-insensitive)
+        second_word = m.group(2).lower()
+        if second_word in ('positive', 'negative'):
+            # This is a marker expression, keep the hyphen
+            return m.group(0)
+        # Replace hyphen with space (hyphen is in middle of words)
+        return f"{m.group(1)} {m.group(2)}"
+    
+    out = re.sub(pattern, _replace_hyphen, text)
+    return out
+
+
 # Field name normalization
 _FIELD_CANONICAL = {
     "cell_type": "cell_type",
