@@ -1,473 +1,75 @@
----
-tags:
-- sentence-transformers
-- cross-encoder
-- generated_from_trainer
-- dataset_size:2401485
-- loss:BinaryCrossEntropyLoss
-base_model: bioformers/bioformer-16L
-pipeline_tag: text-ranking
-library_name: sentence-transformers
-metrics:
-- accuracy
-- accuracy_threshold
-- f1
-- f1_threshold
-- precision
-- recall
-- average_precision
-model-index:
-- name: CrossEncoder based on bioformers/bioformer-16L
-  results:
-  - task:
-      type: cross-encoder-binary-classification
-      name: Cross Encoder Binary Classification
-    dataset:
-      name: dev
-      type: dev
-    metrics:
-    - type: accuracy
-      value: 0.9749636252610312
-      name: Accuracy
-    - type: accuracy_threshold
-      value: 0.9518921375274658
-      name: Accuracy Threshold
-    - type: f1
-      value: 0.8237035470740602
-      name: F1
-    - type: f1_threshold
-      value: 0.6820048093795776
-      name: F1 Threshold
-    - type: precision
-      value: 0.7958120531154239
-      name: Precision
-    - type: recall
-      value: 0.8536211241371754
-      name: Recall
-    - type: average_precision
-      value: 0.8866670870419442
-      name: Average Precision
----
+# Reranker Model
 
-# CrossEncoder based on bioformers/bioformer-16L
+## Download Model
 
-This is a [Cross Encoder](https://www.sbert.net/docs/cross_encoder/usage/usage.html) model finetuned from [bioformers/bioformer-16L](https://huggingface.co/bioformers/bioformer-16L) using the [sentence-transformers](https://www.SBERT.net) library. It computes scores for pairs of texts, which can be used for text reranking and semantic search.
+Download the reranker model from Hugging Face:
+
+**Model URL:** https://huggingface.co/rgrupesh/reranker-model
+
+## Installation
+
+```bash
+# Install required packages
+pip install -U sentence-transformers
+
+# Download the model files from the Hugging Face link above
+# Place all model files in this directory (reranker-model/)
+```
+
+## Configuration
+
+### Where to Update the Reranker Model Path
+
+After downloading the model, you need to configure the path in BOND:
+
+**Option 1: Environment Variable (Recommended)**
+- Edit the `.env` file in the BOND root directory
+- Set the `BOND_RERANKER_PATH` variable:
+  ```bash
+  BOND_RERANKER_PATH=/path/to/BOND/reranker-model
+  ```
+- Example:
+  ```bash
+  BOND_RERANKER_PATH=/Users/yourname/Desktop/conf/BOND/reranker-model
+  ```
+
+**Option 2: Direct Configuration**
+- The reranker path is defined in `bond/config.py` (line 107)
+- It reads from the environment variable: `BOND_RERANKER_PATH`
+- You can also pass it as a parameter when initializing `BondSettings`
+
+**Option 3: Script Override**
+- In ablation scripts (e.g., `benchmark-metrics/20-configs/run_ablation_rerun.py`)
+- Override the `reranker_path` in the config overrides dictionary
+- Example:
+  ```python
+  overrides = {
+      "reranker_path": "/path/to/BOND/reranker-model",
+      # ... other settings
+  }
+  ```
 
 ## Model Details
 
-### Model Description
 - **Model Type:** Cross Encoder
-- **Base model:** [bioformers/bioformer-16L](https://huggingface.co/bioformers/bioformer-16L) <!-- at revision 6b993e525235123cc0d6a1d179a9da14d5e9aba0 -->
+- **Base Model:** bioformers/bioformer-16L
 - **Maximum Sequence Length:** 512 tokens
-- **Number of Output Labels:** 1 label
-<!-- - **Training Dataset:** Unknown -->
-<!-- - **Language:** Unknown -->
-<!-- - **License:** Unknown -->
+- **Training Dataset Size:** 2,401,485 samples
+- **Average Precision:** 0.8867
 
-### Model Sources
+## Required Files
 
-- **Documentation:** [Sentence Transformers Documentation](https://sbert.net)
-- **Documentation:** [Cross Encoder Documentation](https://www.sbert.net/docs/cross_encoder/usage/usage.html)
-- **Repository:** [Sentence Transformers on GitHub](https://github.com/UKPLab/sentence-transformers)
-- **Hugging Face:** [Cross Encoders on Hugging Face](https://huggingface.co/models?library=sentence-transformers&other=cross-encoder)
+After downloading from Hugging Face, this directory should contain:
+- `config.json`
+- `model.safetensors` (or `pytorch_model.bin`)
+- `tokenizer_config.json`
+- `vocab.txt`
+- Other model-specific files
 
-## Usage
+## Model Performance
 
-### Direct Usage (Sentence Transformers)
+- **Accuracy:** 0.975
+- **F1 Score:** 0.824
+- **Precision:** 0.796
+- **Recall:** 0.854
 
-First install the Sentence Transformers library:
-
-```bash
-pip install -U sentence-transformers
-```
-
-Then you can load this model and run inference.
-```python
-from sentence_transformers import CrossEncoder
-
-# Download from the 🤗 Hub
-model = CrossEncoder("cross_encoder_model_id")
-# Get scores for pairs of texts
-pairs = [
-    ['cell_type: C_BEST4; tissue: descending colon; organism: Homo sapiens', 'label: smooth muscle fiber of descending colon; synonyms: non-striated muscle fiber of descending colon; definition: A smooth muscle cell that is part of the descending colon.'],
-    ['cell_type: C_BEST4; tissue: descending colon; organism: Homo sapiens', 'label: smooth muscle cell of colon; synonyms: non-striated muscle fiber of colon; definition: A smooth muscle cell that is part of the colon.'],
-    ['cell_type: C_BEST4; tissue: descending colon; organism: Homo sapiens', 'label: BEST4+ colonocyte; definition: An enterocyte of the human colon expressing bestrophin-4 (BEST4) calcium-activated ion channels.  These cells have a distinct transcriptomic profile compared to other enterocytes and are scattered thr'],
-    ['cell_type: C_BEST4; tissue: descending colon; organism: Homo sapiens', 'label: smooth muscle fiber of ascending colon; synonyms: non-striated muscle fiber of ascending colon; definition: A smooth muscle cell that is part of the ascending colon.'],
-    ['cell_type: C_BEST4; tissue: descending colon; organism: Homo sapiens', 'label: type D cell of colon; synonyms: colon D-cell | colonic delta cell | delta cell of colon; definition: A D cell located in the colon.'],
-]
-scores = model.predict(pairs)
-print(scores.shape)
-# (5,)
-
-# Or rank different texts based on similarity to a single text
-ranks = model.rank(
-    'cell_type: C_BEST4; tissue: descending colon; organism: Homo sapiens',
-    [
-        'label: smooth muscle fiber of descending colon; synonyms: non-striated muscle fiber of descending colon; definition: A smooth muscle cell that is part of the descending colon.',
-        'label: smooth muscle cell of colon; synonyms: non-striated muscle fiber of colon; definition: A smooth muscle cell that is part of the colon.',
-        'label: BEST4+ colonocyte; definition: An enterocyte of the human colon expressing bestrophin-4 (BEST4) calcium-activated ion channels.  These cells have a distinct transcriptomic profile compared to other enterocytes and are scattered thr',
-        'label: smooth muscle fiber of ascending colon; synonyms: non-striated muscle fiber of ascending colon; definition: A smooth muscle cell that is part of the ascending colon.',
-        'label: type D cell of colon; synonyms: colon D-cell | colonic delta cell | delta cell of colon; definition: A D cell located in the colon.',
-    ]
-)
-# [{'corpus_id': ..., 'score': ...}, {'corpus_id': ..., 'score': ...}, ...]
-```
-
-<!--
-### Direct Usage (Transformers)
-
-<details><summary>Click to see the direct usage in Transformers</summary>
-
-</details>
--->
-
-<!--
-### Downstream Usage (Sentence Transformers)
-
-You can finetune this model on your own dataset.
-
-<details><summary>Click to expand</summary>
-
-</details>
--->
-
-<!--
-### Out-of-Scope Use
-
-*List how the model may foreseeably be misused and address what users ought not to do with the model.*
--->
-
-## Evaluation
-
-### Metrics
-
-#### Cross Encoder Binary Classification
-
-* Dataset: `dev`
-* Evaluated with [<code>CEBinaryClassificationEvaluator</code>](https://sbert.net/docs/package_reference/cross_encoder/evaluation.html#sentence_transformers.cross_encoder.evaluation.CEBinaryClassificationEvaluator)
-
-| Metric                | Value      |
-|:----------------------|:-----------|
-| accuracy              | 0.975      |
-| accuracy_threshold    | 0.9519     |
-| f1                    | 0.8237     |
-| f1_threshold          | 0.682      |
-| precision             | 0.7958     |
-| recall                | 0.8536     |
-| **average_precision** | **0.8867** |
-
-<!--
-## Bias, Risks and Limitations
-
-*What are the known or foreseeable issues stemming from this model? You could also flag here known failure cases or weaknesses of the model.*
--->
-
-<!--
-### Recommendations
-
-*What are recommendations with respect to the foreseeable issues? For example, filtering explicit content.*
--->
-
-## Training Details
-
-### Training Dataset
-
-#### Unnamed Dataset
-
-* Size: 2,401,485 training samples
-* Columns: <code>sentence1</code>, <code>sentence2</code>, and <code>label</code>
-* Approximate statistics based on the first 1000 samples:
-  |         | sentence1                                                                                      | sentence2                                                                                        | label                                                          |
-  |:--------|:-----------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|:---------------------------------------------------------------|
-  | type    | string                                                                                         | string                                                                                           | float                                                          |
-  | details | <ul><li>min: 53 characters</li><li>mean: 63.88 characters</li><li>max: 77 characters</li></ul> | <ul><li>min: 24 characters</li><li>mean: 222.07 characters</li><li>max: 681 characters</li></ul> | <ul><li>min: 0.0</li><li>mean: 0.07</li><li>max: 1.0</li></ul> |
-* Samples:
-  | sentence1                                                            | sentence2                                                                                                                                                                                                                                                                                                                                                                                                                                            | label            |
-  |:---------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------|
-  | <code>cell_type: cDC1; tissue: tonsil; organism: Homo sapiens</code> | <code>label: tonsil germinal center B cell; definition: Any germinal center B cell that is part of a tonsil.</code>                                                                                                                                                                                                                                                                                                                                  | <code>0.0</code> |
-  | <code>cell_type: cDC1; tissue: tonsil; organism: Homo sapiens</code> | <code>label: germinal center T cell; synonyms: T follicular helper cell of germinal center of lymph node | T follicular helper cell of lymph node germinal center | lymph node germinal center T follicular helper cell; definition: A specialized type of CD4 positive T cell, the follicular helper T cell (TFH cell), that upregulates CXCR5 expression to enable its follicular localization. These specialised T cells reside in the ger</code> | <code>0.0</code> |
-  | <code>cell_type: cDC1; tissue: tonsil; organism: Homo sapiens</code> | <code>label: tonsil squamous cell; synonyms: tonsil squamous epithelial cell | tonsil squamous epithelial cells | tonsillar squamous cell | tonsillar squamous epithelial cell; definition: Squamous cell of tonsil epithelium.</code>                                                                                                                                                                                                               | <code>0.0</code> |
-* Loss: [<code>BinaryCrossEntropyLoss</code>](https://sbert.net/docs/package_reference/cross_encoder/losses.html#binarycrossentropyloss) with these parameters:
-  ```json
-  {
-      "activation_fn": "torch.nn.modules.linear.Identity",
-      "pos_weight": 5.0
-  }
-  ```
-
-### Evaluation Dataset
-
-#### Unnamed Dataset
-
-* Size: 132,647 evaluation samples
-* Columns: <code>sentence1</code>, <code>sentence2</code>, and <code>label</code>
-* Approximate statistics based on the first 1000 samples:
-  |         | sentence1                                                                                       | sentence2                                                                                        | label                                                          |
-  |:--------|:------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|:---------------------------------------------------------------|
-  | type    | string                                                                                          | string                                                                                           | float                                                          |
-  | details | <ul><li>min: 51 characters</li><li>mean: 71.85 characters</li><li>max: 100 characters</li></ul> | <ul><li>min: 23 characters</li><li>mean: 221.83 characters</li><li>max: 681 characters</li></ul> | <ul><li>min: 0.0</li><li>mean: 0.07</li><li>max: 1.0</li></ul> |
-* Samples:
-  | sentence1                                                                         | sentence2                                                                                                                                                                                                                                                   | label            |
-  |:----------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------|
-  | <code>cell_type: C_BEST4; tissue: descending colon; organism: Homo sapiens</code> | <code>label: smooth muscle fiber of descending colon; synonyms: non-striated muscle fiber of descending colon; definition: A smooth muscle cell that is part of the descending colon.</code>                                                                | <code>0.0</code> |
-  | <code>cell_type: C_BEST4; tissue: descending colon; organism: Homo sapiens</code> | <code>label: smooth muscle cell of colon; synonyms: non-striated muscle fiber of colon; definition: A smooth muscle cell that is part of the colon.</code>                                                                                                  | <code>0.0</code> |
-  | <code>cell_type: C_BEST4; tissue: descending colon; organism: Homo sapiens</code> | <code>label: BEST4+ colonocyte; definition: An enterocyte of the human colon expressing bestrophin-4 (BEST4) calcium-activated ion channels.  These cells have a distinct transcriptomic profile compared to other enterocytes and are scattered thr</code> | <code>0.0</code> |
-* Loss: [<code>BinaryCrossEntropyLoss</code>](https://sbert.net/docs/package_reference/cross_encoder/losses.html#binarycrossentropyloss) with these parameters:
-  ```json
-  {
-      "activation_fn": "torch.nn.modules.linear.Identity",
-      "pos_weight": 5.0
-  }
-  ```
-
-### Training Hyperparameters
-#### Non-Default Hyperparameters
-
-- `eval_strategy`: steps
-- `per_device_train_batch_size`: 32
-- `per_device_eval_batch_size`: 32
-- `learning_rate`: 2e-05
-- `weight_decay`: 0.01
-- `warmup_ratio`: 0.1
-- `fp16`: True
-- `load_best_model_at_end`: True
-
-#### All Hyperparameters
-<details><summary>Click to expand</summary>
-
-- `overwrite_output_dir`: False
-- `do_predict`: False
-- `eval_strategy`: steps
-- `prediction_loss_only`: True
-- `per_device_train_batch_size`: 32
-- `per_device_eval_batch_size`: 32
-- `per_gpu_train_batch_size`: None
-- `per_gpu_eval_batch_size`: None
-- `gradient_accumulation_steps`: 1
-- `eval_accumulation_steps`: None
-- `torch_empty_cache_steps`: None
-- `learning_rate`: 2e-05
-- `weight_decay`: 0.01
-- `adam_beta1`: 0.9
-- `adam_beta2`: 0.999
-- `adam_epsilon`: 1e-08
-- `max_grad_norm`: 1.0
-- `num_train_epochs`: 3
-- `max_steps`: -1
-- `lr_scheduler_type`: linear
-- `lr_scheduler_kwargs`: {}
-- `warmup_ratio`: 0.1
-- `warmup_steps`: 0
-- `log_level`: passive
-- `log_level_replica`: warning
-- `log_on_each_node`: True
-- `logging_nan_inf_filter`: True
-- `save_safetensors`: True
-- `save_on_each_node`: False
-- `save_only_model`: False
-- `restore_callback_states_from_checkpoint`: False
-- `no_cuda`: False
-- `use_cpu`: False
-- `use_mps_device`: False
-- `seed`: 42
-- `data_seed`: None
-- `jit_mode_eval`: False
-- `use_ipex`: False
-- `bf16`: False
-- `fp16`: True
-- `fp16_opt_level`: O1
-- `half_precision_backend`: auto
-- `bf16_full_eval`: False
-- `fp16_full_eval`: False
-- `tf32`: None
-- `local_rank`: 0
-- `ddp_backend`: None
-- `tpu_num_cores`: None
-- `tpu_metrics_debug`: False
-- `debug`: []
-- `dataloader_drop_last`: False
-- `dataloader_num_workers`: 0
-- `dataloader_prefetch_factor`: None
-- `past_index`: -1
-- `disable_tqdm`: False
-- `remove_unused_columns`: True
-- `label_names`: None
-- `load_best_model_at_end`: True
-- `ignore_data_skip`: False
-- `fsdp`: []
-- `fsdp_min_num_params`: 0
-- `fsdp_config`: {'min_num_params': 0, 'xla': False, 'xla_fsdp_v2': False, 'xla_fsdp_grad_ckpt': False}
-- `fsdp_transformer_layer_cls_to_wrap`: None
-- `accelerator_config`: {'split_batches': False, 'dispatch_batches': None, 'even_batches': True, 'use_seedable_sampler': True, 'non_blocking': False, 'gradient_accumulation_kwargs': None}
-- `deepspeed`: None
-- `label_smoothing_factor`: 0.0
-- `optim`: adamw_torch
-- `optim_args`: None
-- `adafactor`: False
-- `group_by_length`: False
-- `length_column_name`: length
-- `ddp_find_unused_parameters`: None
-- `ddp_bucket_cap_mb`: None
-- `ddp_broadcast_buffers`: False
-- `dataloader_pin_memory`: True
-- `dataloader_persistent_workers`: False
-- `skip_memory_metrics`: True
-- `use_legacy_prediction_loop`: False
-- `push_to_hub`: False
-- `resume_from_checkpoint`: None
-- `hub_model_id`: None
-- `hub_strategy`: every_save
-- `hub_private_repo`: None
-- `hub_always_push`: False
-- `hub_revision`: None
-- `gradient_checkpointing`: False
-- `gradient_checkpointing_kwargs`: None
-- `include_inputs_for_metrics`: False
-- `include_for_metrics`: []
-- `eval_do_concat_batches`: True
-- `fp16_backend`: auto
-- `push_to_hub_model_id`: None
-- `push_to_hub_organization`: None
-- `mp_parameters`: 
-- `auto_find_batch_size`: False
-- `full_determinism`: False
-- `torchdynamo`: None
-- `ray_scope`: last
-- `ddp_timeout`: 1800
-- `torch_compile`: False
-- `torch_compile_backend`: None
-- `torch_compile_mode`: None
-- `include_tokens_per_second`: False
-- `include_num_input_tokens_seen`: False
-- `neftune_noise_alpha`: None
-- `optim_target_modules`: None
-- `batch_eval_metrics`: False
-- `eval_on_start`: False
-- `use_liger_kernel`: False
-- `liger_kernel_config`: None
-- `eval_use_gather_object`: False
-- `average_tokens_across_devices`: False
-- `prompts`: None
-- `batch_sampler`: batch_sampler
-- `multi_dataset_batch_sampler`: proportional
-
-</details>
-
-### Training Logs
-| Epoch  | Step  | Training Loss | Validation Loss | dev_average_precision |
-|:------:|:-----:|:-------------:|:---------------:|:---------------------:|
-| 2.0947 | 78600 | 0.1805        | -               | -                     |
-| 2.0973 | 78700 | 0.1498        | -               | -                     |
-| 2.1000 | 78800 | 0.1899        | -               | -                     |
-| 2.1027 | 78900 | 0.1924        | -               | -                     |
-| 2.1053 | 79000 | 0.1521        | 0.2484          | 0.8835                |
-| 2.1080 | 79100 | 0.1988        | -               | -                     |
-| 2.1106 | 79200 | 0.1702        | -               | -                     |
-| 2.1133 | 79300 | 0.1824        | -               | -                     |
-| 2.1160 | 79400 | 0.1688        | -               | -                     |
-| 2.1186 | 79500 | 0.1809        | 0.2202          | 0.8798                |
-| 2.1213 | 79600 | 0.1858        | -               | -                     |
-| 2.1240 | 79700 | 0.1642        | -               | -                     |
-| 2.1266 | 79800 | 0.191         | -               | -                     |
-| 2.1293 | 79900 | 0.1655        | -               | -                     |
-| 2.1320 | 80000 | 0.1789        | 0.1960          | 0.8772                |
-| 2.1346 | 80100 | 0.2002        | -               | -                     |
-| 2.1373 | 80200 | 0.2139        | -               | -                     |
-| 2.1400 | 80300 | 0.199         | -               | -                     |
-| 2.1426 | 80400 | 0.165         | -               | -                     |
-| 2.1453 | 80500 | 0.1848        | 0.2662          | 0.8782                |
-| 2.1480 | 80600 | 0.2118        | -               | -                     |
-| 2.1506 | 80700 | 0.177         | -               | -                     |
-| 2.1533 | 80800 | 0.169         | -               | -                     |
-| 2.1560 | 80900 | 0.1748        | -               | -                     |
-| 2.1586 | 81000 | 0.1532        | 0.2608          | 0.8839                |
-| 2.1613 | 81100 | 0.1618        | -               | -                     |
-| 2.1639 | 81200 | 0.1679        | -               | -                     |
-| 2.1666 | 81300 | 0.1808        | -               | -                     |
-| 2.1693 | 81400 | 0.1685        | -               | -                     |
-| 2.1719 | 81500 | 0.1901        | 0.2348          | 0.8830                |
-| 2.1746 | 81600 | 0.184         | -               | -                     |
-| 2.1773 | 81700 | 0.1667        | -               | -                     |
-| 2.1799 | 81800 | 0.1816        | -               | -                     |
-| 2.1826 | 81900 | 0.159         | -               | -                     |
-| 2.1853 | 82000 | 0.1553        | 0.2375          | 0.8870                |
-| 2.1879 | 82100 | 0.1572        | -               | -                     |
-| 2.1906 | 82200 | 0.1629        | -               | -                     |
-| 2.1933 | 82300 | 0.194         | -               | -                     |
-| 2.1959 | 82400 | 0.1685        | -               | -                     |
-| 2.1986 | 82500 | 0.1859        | 0.2293          | 0.8798                |
-| 2.2013 | 82600 | 0.1483        | -               | -                     |
-| 2.2039 | 82700 | 0.2056        | -               | -                     |
-| 2.2066 | 82800 | 0.1799        | -               | -                     |
-| 2.2093 | 82900 | 0.1645        | -               | -                     |
-| 2.2119 | 83000 | 0.1633        | 0.2365          | 0.8839                |
-| 2.2146 | 83100 | 0.1714        | -               | -                     |
-| 2.2172 | 83200 | 0.1793        | -               | -                     |
-| 2.2199 | 83300 | 0.154         | -               | -                     |
-| 2.2226 | 83400 | 0.151         | -               | -                     |
-| 2.2252 | 83500 | 0.1841        | 0.2031          | 0.8854                |
-| 2.2279 | 83600 | 0.1709        | -               | -                     |
-| 2.2306 | 83700 | 0.1875        | -               | -                     |
-| 2.2332 | 83800 | 0.2041        | -               | -                     |
-| 2.2359 | 83900 | 0.1812        | -               | -                     |
-| 2.2386 | 84000 | 0.1779        | 0.2351          | 0.8889                |
-| 2.2412 | 84100 | 0.224         | -               | -                     |
-| 2.2439 | 84200 | 0.1624        | -               | -                     |
-| 2.2466 | 84300 | 0.1361        | -               | -                     |
-| 2.2492 | 84400 | 0.1371        | -               | -                     |
-| 2.2519 | 84500 | 0.2314        | 0.2933          | 0.8862                |
-| 2.2546 | 84600 | 0.1889        | -               | -                     |
-| 2.2572 | 84700 | 0.2079        | -               | -                     |
-| 2.2599 | 84800 | 0.1783        | -               | -                     |
-| 2.2626 | 84900 | 0.1551        | -               | -                     |
-| 2.2652 | 85000 | 0.1606        | 0.2096          | 0.8915                |
-| 2.2679 | 85100 | 0.1887        | -               | -                     |
-| 2.2705 | 85200 | 0.1829        | -               | -                     |
-| 2.2732 | 85300 | 0.18          | -               | -                     |
-| 2.2759 | 85400 | 0.1935        | -               | -                     |
-| 2.2785 | 85500 | 0.1934        | 0.2301          | 0.8867                |
-
-
-### Framework Versions
-- Python: 3.11.13
-- Sentence Transformers: 4.1.0
-- Transformers: 4.53.3
-- PyTorch: 2.6.0+cu124
-- Accelerate: 1.9.0
-- Datasets: 4.4.1
-- Tokenizers: 0.21.2
-
-## Citation
-
-### BibTeX
-
-#### Sentence Transformers
-```bibtex
-@inproceedings{reimers-2019-sentence-bert,
-    title = "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks",
-    author = "Reimers, Nils and Gurevych, Iryna",
-    booktitle = "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing",
-    month = "11",
-    year = "2019",
-    publisher = "Association for Computational Linguistics",
-    url = "https://arxiv.org/abs/1908.10084",
-}
-```
-
-<!--
-## Glossary
-
-*Clearly define terms in order to be accessible across audiences.*
--->
-
-<!--
-## Model Card Authors
-
-*Lists the people who create the model card, providing recognition and accountability for the detailed work that goes into its construction.*
--->
-
-<!--
-## Model Card Contact
-
-*Provides a way for people who have updates to the Model Card, suggestions, or questions, to contact the Model Card authors.*
--->

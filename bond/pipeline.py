@@ -554,20 +554,28 @@ class BondMatcher:
         timings["normalize+context_ms"] = (time.monotonic() - t0) * 1000
         t_exp = time.monotonic()
         expansions: List[str] = []  # Initialize expansions list
-        if (not cfg.retrieval_only) and cfg.enable_expansion and n_expansions > 0 and not exact_only:
-            # Use the resolved n_expansions for this request
+        
+        # CRITICAL FIX: Allow cached expansions even in retrieval_only mode
+        # This enables: cached expansion + retrieval + reranking WITHOUT disambiguation
+        if cached_expansions is not None and n_expansions > 0 and not exact_only:
+            # Use cached expansions regardless of retrieval_only setting
             n_expansions = n_expansions or cfg.n_expansions
-            
-            # Check if we have cached expansions
-            if cached_expansions is not None:
-                logger.info(f"Using {len(cached_expansions)} cached expansions")
-                expansions = cached_expansions[:n_expansions]
-                # Merge cached context terms if provided
-                if cached_context_terms:
-                    context_terms = _uniq((context_terms or []) + cached_context_terms)[:5]
-                    logger.info(f"[FLOW] Using cached context terms: {cached_context_terms}")
-            else:
-                logger.info(f"Generating {n_expansions} query expansions...")
+            logger.info(f"Using {len(cached_expansions)} cached expansions (retrieval_only={cfg.retrieval_only})")
+            expansions = cached_expansions[:n_expansions]
+            # Merge cached context terms if provided
+            if cached_context_terms:
+                context_terms = _uniq((context_terms or []) + cached_context_terms)[:5]
+                logger.info(f"[FLOW] Using cached context terms: {cached_context_terms}")
+            # Add expansions to queries list
+            queries.extend(expansions[:n_expansions])
+            trace["expansions"] = expansions[:n_expansions]
+            if context_terms:
+                trace["context_terms"] = context_terms
+            logger.info(f"Total cached expansions: {len(expansions[:n_expansions])}")
+        elif (not cfg.retrieval_only) and cfg.enable_expansion and n_expansions > 0 and not exact_only:
+            # Generate expansions via LLM only if NOT in retrieval_only mode
+            n_expansions = n_expansions or cfg.n_expansions
+            logger.info(f"Generating {n_expansions} query expansions...")
             guidance = get_field_guidance(field_name)
             guidance_block = ""
             if guidance:
@@ -619,11 +627,12 @@ class BondMatcher:
                 # For other errors, continue without expansions
             logger.info(f"Generated {len(expansions)} expansions and {len(context_terms)} context terms")
             
+            # Add LLM-generated expansions to queries list
             queries.extend(expansions[:n_expansions])
             trace["expansions"] = expansions[:n_expansions]
             if context_terms:
                 trace["context_terms"] = context_terms
-            logger.info(f"Total expansions: {len(expansions[:n_expansions])}")
+            logger.info(f"Total LLM expansions: {len(expansions[:n_expansions])}")
         
         timings["expansion_ms"] = (time.monotonic() - t_exp) * 1000
         
