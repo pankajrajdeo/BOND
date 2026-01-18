@@ -7,7 +7,7 @@ from the pipeline to keep orchestration code lean.
 from __future__ import annotations
 
 import re
-from typing import Tuple
+from typing import Tuple, Optional
 
 
 # Precompiled, token-aware patterns for abstain triggers (case-insensitive)
@@ -21,7 +21,7 @@ _ABSTAIN_PATTERNS = [
 ]
 
 
-def should_abstain(query: str) -> Tuple[bool, str | None]:
+def should_abstain(query: str) -> Tuple[bool, Optional[str]]:
     """Return (True, reason) if query is a no-value indicator.
 
     Triggers include: unknown, doublet(s), debris, null, na, n/a (case-insensitive).
@@ -33,7 +33,7 @@ def should_abstain(query: str) -> Tuple[bool, str | None]:
     return False, None
 
 
-def context_violation(label_blob: str, tissue: str | None) -> bool:
+def context_violation(label_blob: str, tissue: Optional[str]) -> bool:
     """Detect anatomical incompatibilities given tissue context.
     Conservative, token-based checks to avoid cross-system leakage.
     """
@@ -70,7 +70,7 @@ def context_violation(label_blob: str, tissue: str | None) -> bool:
     return False
 
 
-def species_violation(label_blob: str, organism: str | None) -> bool:
+def species_violation(label_blob: str, organism: Optional[str]) -> bool:
     """Detect species incompatibilities based on label/definition markers.
 
     Heuristics:
@@ -130,7 +130,7 @@ _ORG_CANONICAL = {
 }
 
 
-def normalize_organism(name: str | None) -> str | None:
+def normalize_organism(name: Optional[str]) -> Optional[str]:
     if not name:
         return name
     key = name.strip().lower()
@@ -141,7 +141,7 @@ def normalize_organism(name: str | None) -> str | None:
 _MARKER_SUFFIX_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9-]*)([+-])\b")
 
 
-def normalize_marker_suffixes(text: str | None) -> str | None:
+def normalize_marker_suffixes(text: Optional[str]) -> Optional[str]:
     """Normalize marker suffixes like `CD25+` -> `CD25 positive`, `CD14-` -> `CD14 negative`.
     Leaves other text unchanged. Returns unchanged when input is falsy.
     """
@@ -157,7 +157,7 @@ def normalize_marker_suffixes(text: str | None) -> str | None:
     return out
 
 
-def normalize_cell_type_hyphens(text: str | None) -> str | None:
+def normalize_cell_type_hyphens(text: Optional[str]) -> Optional[str]:
     """Normalize hyphens in cell type names: remove hyphens in the middle of words, keep hyphens at the end.
     
     Rule: 
@@ -220,7 +220,7 @@ _FIELD_CANONICAL = {
 }
 
 
-def normalize_field_name(name: str | None) -> str | None:
+def normalize_field_name(name: Optional[str]) -> Optional[str]:
     if not name:
         return name
     key = name.strip().lower()

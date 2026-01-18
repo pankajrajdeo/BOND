@@ -7,6 +7,8 @@ Expand the query "{query}" into exactly {n} concise, high-signal variants. Also 
 - Field: "{field_name}"
 - Tissue: "{tissue}"
 - Organism: "{organism}"
+- Development Stage: "{development_stage}"
+- Disease: "{disease}"
 - Derived Context Terms: {context_terms}
 
 **Expansion Rules for Field "{field_name}":**
@@ -15,7 +17,7 @@ Expand the query "{query}" into exactly {n} concise, high-signal variants. Also 
 - Context Priority: {context_priority}
 - Avoid: {avoid}
 - Preserve core query tokens; if an abbreviation is present (e.g., "smg"), expand it (e.g., "submucosal gland").
-- Reflect the Tissue and Organism context in the variants when applicable (e.g., lung/airway/bronchial for lung datasets).
+- Reflect the Tissue, Organism, Development Stage, and Disease context in the variants when applicable (e.g., lung/airway/bronchial for lung datasets; embryonic vs adult stages; disease-specific cell types or tissues).
 - Do not cross organs or systems unless explicitly asked (avoid salivary/mammary/pancreatic for lung unless in the query).
 
 **Instructions:**
@@ -31,6 +33,8 @@ You are a meticulous biomedical ontology curator. Your sole task is to choose th
 - Query: "{query}"
 - Field: "{field_name}"
 - Tissue Context: "{tissue}"
+- Development Stage Context: "{development_stage}"
+- Disease Context: "{disease}"
 
 **CANDIDATES (ID | Label | Source | Score | Description):**
 {candidates_block}
@@ -40,16 +44,18 @@ You MUST return a candidate ID from the list below. If NO candidate satisfies al
 
 {disambiguation_rules}
 
-**EXACT MATCH PRIORITY (HIGHEST PRIORITY):**
-- **LABEL EXACT MATCHES**: If a candidate's label EXACTLY matches the query (case-insensitive, normalized), it has HIGHEST PRIORITY and should be chosen over context-specific matches.
-- **Only if no exact label match exists** should you consider tissue context or other signals.
+**CONTEXT ENFORCEMENT (HIGHEST PRIORITY):**
+- **ALL candidates, including exact label matches, MUST satisfy context constraints.**
+- If a Tissue Context is provided, REJECT any candidate whose label/definition/synonyms indicate an incompatible organ/system (e.g., salivary or mammary ducts for lung; non-respiratory tissues for airway queries). This applies even to exact label matches.
+- If a Development Stage Context is provided, REJECT any candidate whose label/definition/synonyms indicate an incompatible developmental stage (e.g., embryonic terms for adult stage queries, or vice versa). This applies even to exact label matches.
+- If a Disease Context is provided, REJECT any candidate whose label/definition/synonyms indicate an incompatible disease state (e.g., disease-specific terms when disease context is "normal", or vice versa). This applies even to exact label matches.
+- If an Organism Context is provided, REJECT candidates with species markers (e.g., "(Mmus)") that contradict the organism context. This applies even to exact label matches.
 
-**CONTEXT ENFORCEMENT (LOWER PRIORITY):**
-- If a Tissue Context is provided, REJECT any candidate whose label/definition/synonyms indicate an incompatible organ/system (e.g., salivary or mammary ducts for lung; non-respiratory tissues for airway queries).
-- However, if an exact label match exists, it takes precedence over tissue context matching.
+**EXACT MATCH PRIORITY (AFTER CONTEXT FILTERING):**
+- Among candidates that satisfy all context constraints, **LABEL EXACT MATCHES** (where a candidate's label EXACTLY matches the query, case-insensitive, normalized) should be preferred over other candidates.
+- If multiple exact label matches exist after context filtering, prefer the one that best matches the context.
 
 **OTHER RULES:**
-- Species enforcement: REJECT candidates with species markers (e.g., "(Mmus)") that contradict the organism context.
 - Unknown/ambiguous queries: For queries containing "unknown" or "doublet", prefer to set "chosen_id": null rather than guess.
 - The retrieval score is the LEAST important factor; use it only to break ties between candidates that already satisfy all rules and context constraints.
 
@@ -74,6 +80,9 @@ Placeholders:
   - {n}: number of expansions to generate
   - {field_name}: schema field (cell_type, tissue, disease, ...)
   - {tissue}: dataset tissue context (may be "N/A")
+  - {organism}: organism context (may be "N/A")
+  - {development_stage}: developmental stage context (may be "N/A")
+  - {disease}: disease context (may be "N/A")
   - {semantic_constraints}, {expansion_focus}: field-guided expansion hints
   - {candidates_block}: top-k candidates for disambiguation (id|label|source|score|desc)
   - {disambiguation_rules}: strict, field-specific rules to enforce semantics
@@ -91,6 +100,8 @@ Input:
 - Field: "{field_name}"
 - Tissue: "{tissue}"
 - Organism: "{organism}"
+- Development Stage: "{development_stage}"
+- Disease: "{disease}"
 
 Rules:
 - Return concise tokens/phrases (1-3 words), no punctuation or explanations.
@@ -98,5 +109,5 @@ Rules:
 - Do not include the original query tokens; avoid duplicates and overly generic words.
 
 Return ONLY JSON:
-{ "context_terms": ["term1", "term2", "term3"] }
+{{ "context_terms": ["term1", "term2", "term3"] }}
 """

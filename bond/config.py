@@ -41,6 +41,7 @@ class BondSettings(BaseModel):
     # candidates provided to the disambiguation LLM.
     topk_final: int = Field(default=int(os.getenv("BOND_TOPK_FINAL", 20)))
     rrf_k: float = Field(default=float(os.getenv("BOND_RRF_K", 60.0)))
+    use_rrf: bool = Field(default=True, description="Use RRF fusion. If False, use simple concatenation with priority ordering.")
 
     # RRF source weighting (JSON string preferred; falls back to per-weight envs for BC)
     rrf_weights: Dict[str, float] = Field(

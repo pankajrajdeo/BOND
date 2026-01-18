@@ -1,5 +1,5 @@
 # bond/field_guidance.py
-from typing import Dict
+from typing import Dict, Optional
 
 FIELD_GUIDANCE: Dict[str, Dict[str, str]] = {
     "cell_type": {
@@ -89,7 +89,7 @@ FIELD_GUIDANCE: Dict[str, Dict[str, str]] = {
     },
 }
 
-def get_field_guidance(field_name: str | None) -> Dict[str, str]:
+def get_field_guidance(field_name: Optional[str]) -> Dict[str, str]:
     if not field_name:
         return {}
     return FIELD_GUIDANCE.get(field_name.lower(), {})
