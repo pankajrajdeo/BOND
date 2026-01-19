@@ -1,4 +1,4 @@
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Optional
 
 
 def _assay_tokens(text: str) -> set[str]:
@@ -34,7 +34,7 @@ def apply_soft_boosts(
     cfg,
     field_name: str,
     query: str,
-    context_terms: List[str] | None,
+    context_terms: Optional[List[str]],
     exact_ids: Set[str],
 ) -> None:
     """Apply domain-aware soft boosts to fusion_score in-place.

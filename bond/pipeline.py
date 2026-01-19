@@ -10,7 +10,7 @@ from .config import BondSettings
 from .providers import resolve_embeddings, ChatLLM
 from .retrieval.bm25_sqlite import search_exact, search_bm25
 from .retrieval.faiss_store import FaissStore
-from .fusion import rrf_fuse
+from .fusion import rrf_fuse, simple_fuse
 from .prompts import QUERY_EXPANSION_PROMPT, DISAMBIGUATION_PROMPT, CONTEXT_TERMS_PROMPT
 from .models import ExpansionResponse, DisambiguationResponse
 from .validate_signature import validate_embedding_signature
@@ -22,7 +22,6 @@ from .rules import should_abstain, context_violation, species_violation, normali
 from .abbrev import AbbreviationExpander
 from .fusion_weights import field_aware_weights
 from .graph_utils import compute_graph_neighbors
-from .rerank import apply_soft_boosts
 configure_runtime()
 
 # Helper to parse LLM JSON into a Pydantic model
@@ -41,7 +40,7 @@ def _extract_json_str(text: str):
         return text[s:e+1]
     return None
 
-def parse_llm_json(text: str, model: Type[_T]) -> _T | None:
+def parse_llm_json(text: str, model: Type[_T]) -> Optional[_T]:
     js = _extract_json_str(text)
     if not js:
         return None
@@ -208,15 +207,17 @@ class BondMatcher:
     def _build_intent_text(
         self,
         query: str,
-        field_name: str | None,
-        organism: str | None,
-        tissue: str | None,
-        queries_with_expansions: list[str] | None,
-        context_terms: list[str] | None,
+        field_name: Optional[str],
+        organism: Optional[str],
+        tissue: Optional[str],
+        queries_with_expansions: Optional[List[str]],
+        context_terms: Optional[List[str]],
+        development_stage: Optional[str] = None,
+        disease: Optional[str] = None,
     ) -> str:
         """Construct a deterministic intent string for dense_full embedding.
 
-        This captures base query, field context, organism/tissue hints, expansions,
+        This captures base query, field context, organism/tissue/disease/development_stage hints, expansions,
         and derived context terms — without using any LLM.
         """
         parts: list[str] = []
@@ -226,6 +227,10 @@ class BondMatcher:
             parts.append(f"organism={organism}")
         if tissue:
             parts.append(f"tissue={tissue}")
+        if development_stage:
+            parts.append(f"development_stage={development_stage}")
+        if disease:
+            parts.append(f"disease={disease}")
         parts.append(f"query={query}")
         if queries_with_expansions and len(queries_with_expansions) > 1:
             alts = [q for q in queries_with_expansions[1:5] if q and q != query]
@@ -235,7 +240,7 @@ class BondMatcher:
             parts.append("ctx=" + ", ".join(context_terms[:5]))
         return " ; ".join(parts)
 
-    def _expand_abbreviations(self, text: str, field_name: str | None) -> str:
+    def _expand_abbreviations(self, text: str, field_name: Optional[str]) -> str:
         try:
             return self.abbrev.expand(text, field_name)
         except Exception:
@@ -244,9 +249,11 @@ class BondMatcher:
     def _derive_context_terms(
         self,
         base_query: str,
-        field_name: str | None,
-        tissue: str | None,
-        organism: str | None,
+        field_name: Optional[str],
+        tissue: Optional[str],
+        organism: Optional[str],
+        development_stage: Optional[str] = None,
+        disease: Optional[str] = None,
     ) -> List[str]:
         """Derive up to 5 high-signal context terms using multiple methods.
         Methods:
@@ -305,6 +312,8 @@ class BondMatcher:
                 field_name=field_name or "N/A",
                 tissue=tissue or "N/A",
                 organism=organism or "N/A",
+                development_stage=development_stage or "N/A",
+                disease=disease or "N/A",
             )
             llm_out = self.expansion_llm.text(prompt, temperature=0)
             parsed = parse_llm_json(llm_out, ExpansionResponse)
@@ -381,7 +390,7 @@ class BondMatcher:
     def _dense_search_dual(
         self,
         base_queries: List[str],
-        ctx_queries: List[str] | None,
+        ctx_queries: Optional[List[str]],
         k: Optional[int] = None,
     ) -> tuple[List[str], List[str]]:
         """Run a single FAISS search for base + context queries and split results.
@@ -430,6 +439,8 @@ class BondMatcher:
         field_name: str,
         organism: str,
         tissue: str,
+        development_stage: str = "",
+        disease: str = "",
         n_expansions: Optional[int] = None,
         topk_final: Optional[int] = None,
         return_trace: Optional[bool] = None,
@@ -439,18 +450,21 @@ class BondMatcher:
         rrf_k: Optional[float] = None,
         num_choices: Optional[int] = None,
         exact_only: bool = False,
-        graph_depth: int | None = None,
+        graph_depth: Optional[int] = None,
         rerank_after_graph: bool = True,
+        cached_expansions: Optional[List[str]] = None,
+        cached_context_terms: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         # Increment request count for metrics
         self._request_count += 1
         
         # Direct compute (no caching)
         return self._query_internal(
-            query, field_name, organism, tissue, n_expansions,
+            query, field_name, organism, tissue, development_stage, disease, n_expansions,
             topk_final, return_trace,
             topk_exact, topk_bm25, topk_dense, rrf_k, num_choices,
-            exact_only, graph_depth, rerank_after_graph
+            exact_only, graph_depth, rerank_after_graph,
+            cached_expansions, cached_context_terms
         )
 
     def _query_internal(
@@ -459,6 +473,8 @@ class BondMatcher:
         field_name: str,
         organism: str,
         tissue: str,
+        development_stage: str = "",
+        disease: str = "",
         n_expansions: Optional[int] = None,
         topk_final: Optional[int] = None,
         return_trace: Optional[bool] = None,
@@ -468,8 +484,10 @@ class BondMatcher:
         rrf_k: Optional[float] = None,
         num_choices: Optional[int] = None,
         exact_only: bool = False,
-        graph_depth: int | None = None,
+        graph_depth: Optional[int] = None,
         rerank_after_graph: bool = True,
+        cached_expansions: Optional[List[str]] = None,
+        cached_context_terms: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         cfg = self.cfg
         
@@ -521,7 +539,7 @@ class BondMatcher:
 
         queries = [query]
         # Derive context terms first (used to guide expansion and retrieval)
-        context_terms: List[str] = self._derive_context_terms(query, field_name, tissue, organism)
+        context_terms: List[str] = self._derive_context_terms(query, field_name, tissue, organism, development_stage, disease)
 
         # Early abstain short-circuit to avoid unnecessary LLM calls/costs
         _abstain_early, _reason_early = should_abstain(query)
@@ -535,10 +553,29 @@ class BondMatcher:
 
         timings["normalize+context_ms"] = (time.monotonic() - t0) * 1000
         t_exp = time.monotonic()
-        if (not cfg.retrieval_only) and cfg.enable_expansion and n_expansions > 0 and not exact_only:
-            logger.info(f"Generating {n_expansions} query expansions...")
-            # Use the resolved n_expansions for this request
+        expansions: List[str] = []  # Initialize expansions list
+        
+        # CRITICAL FIX: Allow cached expansions even in retrieval_only mode
+        # This enables: cached expansion + retrieval + reranking WITHOUT disambiguation
+        if cached_expansions is not None and n_expansions > 0 and not exact_only:
+            # Use cached expansions regardless of retrieval_only setting
             n_expansions = n_expansions or cfg.n_expansions
+            logger.info(f"Using {len(cached_expansions)} cached expansions (retrieval_only={cfg.retrieval_only})")
+            expansions = cached_expansions[:n_expansions]
+            # Merge cached context terms if provided
+            if cached_context_terms:
+                context_terms = _uniq((context_terms or []) + cached_context_terms)[:5]
+                logger.info(f"[FLOW] Using cached context terms: {cached_context_terms}")
+            # Add expansions to queries list
+            queries.extend(expansions[:n_expansions])
+            trace["expansions"] = expansions[:n_expansions]
+            if context_terms:
+                trace["context_terms"] = context_terms
+            logger.info(f"Total cached expansions: {len(expansions[:n_expansions])}")
+        elif (not cfg.retrieval_only) and cfg.enable_expansion and n_expansions > 0 and not exact_only:
+            # Generate expansions via LLM only if NOT in retrieval_only mode
+            n_expansions = n_expansions or cfg.n_expansions
+            logger.info(f"Generating {n_expansions} query expansions...")
             guidance = get_field_guidance(field_name)
             guidance_block = ""
             if guidance:
@@ -555,6 +592,8 @@ class BondMatcher:
                 field_name=field_name or "N/A",
                 tissue=tissue or "N/A",
                 organism=organism or "N/A",
+                    development_stage=development_stage or "N/A",
+                    disease=disease or "N/A",
                 context_terms=", ".join(context_terms) if context_terms else "[]",
                 semantic_constraints=guidance.get('semantic_constraints', ''),
                 expansion_focus=guidance.get('expansion_focus', ''),
@@ -563,7 +602,6 @@ class BondMatcher:
             )
             
             # Generate expansions via LLM (resilient)
-            expansions: List[str] = []
             try:
                 logger.info(f"[FLOW] Calling expansion LLM with query: '{query}'")
                 exp_text = self.expansion_llm.text(prompt, temperature=0, max_tokens=1024)
@@ -589,11 +627,12 @@ class BondMatcher:
                 # For other errors, continue without expansions
             logger.info(f"Generated {len(expansions)} expansions and {len(context_terms)} context terms")
             
+            # Add LLM-generated expansions to queries list
             queries.extend(expansions[:n_expansions])
             trace["expansions"] = expansions[:n_expansions]
             if context_terms:
                 trace["context_terms"] = context_terms
-            logger.info(f"Total expansions: {len(expansions[:n_expansions])}")
+            logger.info(f"Total LLM expansions: {len(expansions[:n_expansions])}")
         
         timings["expansion_ms"] = (time.monotonic() - t_exp) * 1000
         
@@ -606,7 +645,7 @@ class BondMatcher:
         exact_future = self.executor.submit(
             lambda: search_exact(self.get_connection(), cfg.table_terms, cfg.table_terms_fts, q_norms, topk_exact_v, sources=ontology_filter)
         )
-        bm25_future = None if exact_only else self.executor.submit(
+        bm25_future = None if (exact_only or topk_bm25_v == 0) else self.executor.submit(
             lambda: [h["id"] for q in queries for h in search_bm25(self.get_connection(), cfg.table_terms, cfg.table_terms_fts, q, topk_bm25_v, sources=ontology_filter)]
         )
         # Context-enhanced BM25 channel: append derived context terms to each query
@@ -616,14 +655,14 @@ class BondMatcher:
             ctx_queries = [f"{q} {ctx_hint}".strip() for q in queries]
 
         # Dense base channel (queries + expansions)
-        dense_base_future = None if exact_only else self.executor.submit(
+        dense_base_future = None if (exact_only or topk_dense_v == 0) else self.executor.submit(
             lambda: self._dense_search_batch(queries, k=topk_dense_v)
         )
         # Dense intent channel (single intent string)
-        intent_text = self._build_intent_text(query, field_name, organism, tissue, queries, context_terms)
+        intent_text = self._build_intent_text(query, field_name, organism, tissue, queries, context_terms, development_stage, disease)
         intent_vec = None
         dense_full_future = None
-        if not exact_only:
+        if not exact_only and topk_dense_v > 0:
             try:
                 intent_vec_np = np.array(self.embed_fn([intent_text]), dtype=np.float32)
                 intent_vec = intent_vec_np[0]
@@ -632,7 +671,7 @@ class BondMatcher:
                 )
             except Exception as e:
                 logger.debug(f"Intent channel embedding/search skipped: {e}")
-        bm25_ctx_future = None if (exact_only or not ctx_queries) else self.executor.submit(
+        bm25_ctx_future = None if (exact_only or not ctx_queries or topk_bm25_v == 0) else self.executor.submit(
             lambda: [h["id"] for q in ctx_queries for h in search_bm25(self.get_connection(), cfg.table_terms, cfg.table_terms_fts, q, topk_bm25_v, sources=ontology_filter)]
         )
 
@@ -810,9 +849,17 @@ class BondMatcher:
         if 'dense_full_ids' in locals() and dense_full_ids:
             channel_rankings["dense_full"] = dense_full_ids
         t_fuse = time.monotonic()
-        fused = rrf_fuse(channel_rankings, k=rrf_k_v, weights=weights)[:topk_final]
+        
+        # Use RRF or simple fusion based on config
+        if cfg.use_rrf:
+            fused = rrf_fuse(channel_rankings, k=rrf_k_v, weights=weights)[:topk_final]
+            logger.info(f"Fusion complete: {len(fused)} candidates ranked by RRF")
+        else:
+            # Simple concatenation fusion: priority order with deduplication
+            fused = simple_fuse(channel_rankings)[:topk_final]
+            logger.info(f"Fusion complete: {len(fused)} candidates using simple concatenation (no RRF)")
+        
         trace["fusion"] = fused
-        logger.info(f"Fusion complete: {len(fused)} candidates ranked by RRF")
         timings["fusion_ms"] = (time.monotonic() - t_fuse) * 1000
 
         # Log contribution by channel
@@ -863,11 +910,19 @@ class BondMatcher:
                     graph_ranked_list.append((nid, score))
                 graph_ranked_list.sort(key=lambda x: x[1], reverse=True)
                 graph_ids_only = [nid for nid, _ in graph_ranked_list]
-                fused2 = rrf_fuse(
-                    {"fused": [fid for fid, _ in fused], "graph": graph_ids_only},
-                    k=rrf_k_v,
-                    weights={"fused": 1.0, "graph": float(getattr(cfg, 'graph_weight', 0.7))},
-                )[:topk_final]
+                
+                if cfg.use_rrf:
+                    fused2 = rrf_fuse(
+                        {"fused": [fid for fid, _ in fused], "graph": graph_ids_only},
+                        k=rrf_k_v,
+                        weights={"fused": 1.0, "graph": float(getattr(cfg, 'graph_weight', 0.7))},
+                    )[:topk_final]
+                else:
+                    # Simple fusion: fused results first, then graph neighbors (deduplicated)
+                    fused2 = simple_fuse(
+                        {"fused": [fid for fid, _ in fused], "graph": graph_ids_only},
+                        channel_priority=["fused", "graph"]
+                    )[:topk_final]
                 # Log that AUTO/ON graph rerank was applied for transparency
                 try:
                     mode = (cfg.graph_mode or "auto").lower()
@@ -1049,25 +1104,26 @@ class BondMatcher:
             return payload
         
         # Apply hard filters for cell types
-        # IMPORTANT: Label exact matches are exempt from filtering (they are the most direct match)
+        # TESTING: Label exact matches now go through tissue context filtering
         if label_exact_match_set:
-            logger.info(f"Label exact matches to exempt from filtering: {label_exact_match_set}")
+            logger.info(f"Label exact matches found (will be filtered by tissue context): {label_exact_match_set}")
         original_count = len(ranked)
         if field_name.lower() in {"cell_type"} and (tissue or organism):
             kept = []
             for r in ranked:
-                # Exempt label exact matches from hard constraints filtering
-                if r['id'] in label_exact_match_set:
-                    logger.info(f"Exempting {r['id']} ({r.get('label', '')}) from hard constraints - label exact match")
-                    kept.append(r)
-                    continue
-                
+                # Label exact matches now go through normal filtering (testing tissue context awareness)
                 blob = _make_label_blob(r)
                 if tissue and context_violation(blob, tissue):
-                    logger.debug(f"Filtered {r['id']} due to tissue conflict: {r.get('label', '')}")
+                    if r['id'] in label_exact_match_set:
+                        logger.info(f"Filtered label exact match {r['id']} ({r.get('label', '')}) due to tissue conflict: {tissue}")
+                    else:
+                        logger.debug(f"Filtered {r['id']} due to tissue conflict: {r.get('label', '')}")
                     continue
                 if organism and species_violation(blob, organism):
-                    logger.debug(f"Filtered {r['id']} due to species conflict: {r.get('label', '')}")
+                    if r['id'] in label_exact_match_set:
+                        logger.info(f"Filtered label exact match {r['id']} ({r.get('label', '')}) due to species conflict: {organism}")
+                    else:
+                        logger.debug(f"Filtered {r['id']} due to species conflict: {r.get('label', '')}")
                     continue
                 kept.append(r)
             ranked = kept or ranked  # only drop if we still have something
@@ -1113,50 +1169,25 @@ class BondMatcher:
                 payload["trace"] = trace
             return payload
 
-        # --- Re-ranking with Contextual Soft Boosts ---
+        # --- Re-ranking ---
         t_rerank = time.monotonic()
-        logger.info("Re-ranking candidates with contextual soft boosts...")
         exact_set = set(exact_ids)
 
-        # Cross-encoder reranker (if available) - REPLACES rule-based reranking
+        # Cross-encoder reranker (if available)
         if self.reranker is not None and ranked:
-            try:
-                logger.info("Applying cross-encoder reranking (replacing rule-based reranking)...")
-                ranked = self._rerank_with_cross_encoder(
-                    _orig_query or query, field_name, tissue, organism, ranked, top_k=topk_final or len(ranked)
-                )
-                logger.info(f"Reranker reordered candidates, top-3: {[r['id'] for r in ranked[:3]]}")
-                # Reranker replaces all rule-based reranking - skip semantic intent and soft boosts
-                ranked.sort(key=lambda x: x["fusion_score"], reverse=True)
-            except Exception as e:
-                logger.warning(f"Reranker failed, falling back to rule-based reranking: {e}")
-                # Fall through to rule-based reranking
-                use_rule_based_rerank = True
-            else:
-                use_rule_based_rerank = False
-        else:
-            use_rule_based_rerank = True
-
-        # Rule-based reranking (only if reranker is not used or failed)
-        if use_rule_based_rerank:
-            # Semantic intent cosine rerank using FAISS rescore vectors (no term re-embedding)
-            if self.cfg.enable_semantic_intent_rerank and 'intent_vec' in locals() and intent_vec is not None and ranked:
-                try:
-                    cand_ids = [r["id"] for r in ranked]
-                    sim_map = self.faiss.score_ids(intent_vec, cand_ids)
-                    if sim_map:
-                        sims = [sim_map.get(r["id"], 0.0) for r in ranked]
-                        s_min, s_max = min(sims), max(sims)
-                        denom = (s_max - s_min) or 1.0
-                        for r, s in zip(ranked, sims):
-                            score01 = (s - s_min) / denom
-                            r["fusion_score"] += self.cfg.semantic_intent_weight * float(score01)
-                        logger.info("Applied semantic intent cosine rerank to fused candidates")
-                except Exception as e:
-                    logger.debug(f"Semantic intent rerank skipped due to error: {e}")
-
-            apply_soft_boosts(ranked, cfg, field_name, _orig_query or "", context_terms or [], exact_set)
+            logger.info("Applying cross-encoder reranking...")
+            ranked = self._rerank_with_cross_encoder(
+                _orig_query or query, field_name, tissue, organism, ranked, top_k=topk_final or len(ranked)
+            )
+            logger.info(f"Reranker reordered candidates, top-3: {[r['id'] for r in ranked[:3]]}")
+            # Reranker replaces all rule-based reranking - skip semantic intent and soft boosts
             ranked.sort(key=lambda x: x["fusion_score"], reverse=True)
+        else:
+            # When reranker_path=None, skip reranking entirely (for ablation baselines)
+            # Use fusion scores as-is from RRF
+            logger.info("Skipping reranking (reranker_path=None) - using fusion scores as-is")
+            ranked.sort(key=lambda x: x["fusion_score"], reverse=True)
+        
         timings["rerank_ms"] = (time.monotonic() - t_rerank) * 1000
 
         # Calculate confidence scores
@@ -1204,6 +1235,8 @@ class BondMatcher:
                 query=query,
                 field_name=field_name or "N/A",
                 tissue=tissue or "N/A",
+                development_stage=development_stage or "N/A",
+                disease=disease or "N/A",
                 candidates_block=candidates_block,
                 disambiguation_rules=guidance.get('disambiguation_rules', ''),
             )

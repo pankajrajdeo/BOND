@@ -1,7 +1,7 @@
 import os
 import json
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 
 class AbbreviationExpander:
@@ -47,7 +47,7 @@ class AbbreviationExpander:
             if flat_entries:
                 self._pats.setdefault("global", []).extend(compile_map(flat_entries))
 
-    def expand(self, text: str, field_name: str | None) -> str:
+    def expand(self, text: str, field_name: Optional[str]) -> str:
         if not text or not self._pats:
             return text
         out = text

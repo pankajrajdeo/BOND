@@ -112,7 +112,7 @@ class ExpansionResponse(BaseModel):
 
 class DisambiguationResponse(BaseModel):
     """Expected structure from disambiguation LLM."""
-    chosen_id: str | None  # Allow None for abstain capability
+    chosen_id: Optional[str] = None  # Allow None for abstain capability
     reason: Optional[str] = None
     llm_confidence: Optional[float] = None
     alternatives: Optional[List[str]] = None
